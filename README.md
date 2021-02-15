@@ -8,4 +8,5 @@
 - eslint (styling)
 - prettier (styling)
 - nodemon (hot reloading of server)
-- sequelize (maintaining database functions for sqlite3 DB)
+- sequelize (ORM for maintaining database functions for sqlite3 DB)
+- sqlite3
