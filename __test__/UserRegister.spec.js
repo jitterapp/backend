@@ -86,7 +86,7 @@ describe('User Registration', () => {
       .then(() => {
         User.findAll().then((userlist) => {
           const savedUser = userlist[0];
-          expect(savedUser.password).toBe('P4ssword');
+          expect(savedUser.password).not.toBe('P4ssword');
           done();
         });
       });
