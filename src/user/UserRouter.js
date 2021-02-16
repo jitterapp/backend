@@ -1,13 +1,9 @@
 const express = require('express');
-const User = require('./User');
-const bcrypt = require('bcrypt');
+const UserService = require('./UserService');
 const router = express.Router();
 
 router.post('/api/1.0/users', async (req, res) => {
-  const saltRounds = 10;
-  const hash = await bcrypt.hash(req.body.password, saltRounds);
-  const user = { ...req.body, password: hash };
-  await User.create(user);
+  await UserService.save(req.body);
   return res.send({ message: 'User created' });
 });
 
