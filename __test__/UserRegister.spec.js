@@ -18,7 +18,7 @@ describe('User Registration', () => {
       .send({
         username: 'user1',
         email: 'user1@mail.com',
-        password: 'Password',
+        password: 'P4ssword',
       })
       .then((response) => {
         expect(response.status).toBe(200);
@@ -32,7 +32,7 @@ describe('User Registration', () => {
       .send({
         username: 'user1',
         email: 'user1@mail.com',
-        password: 'Password',
+        password: 'P4ssword',
       })
       .then((response) => {
         expect(response.body.message).toBe('User created');
@@ -46,7 +46,7 @@ describe('User Registration', () => {
       .send({
         username: 'user1',
         email: 'user1@mail.com',
-        password: 'Password',
+        password: 'P4ssword',
       })
       .then(() => {
         // query user table
@@ -63,13 +63,30 @@ describe('User Registration', () => {
       .send({
         username: 'user1',
         email: 'user1@mail.com',
-        password: 'Password',
+        password: 'P4ssword',
       })
       .then(() => {
         User.findAll().then((userlist) => {
           const savedUser = userlist[0];
           expect(savedUser.username).toBe('user1');
           expect(savedUser.email).toBe('user1@mail.com');
+          done();
+        });
+      });
+  });
+
+  it('hashes the pasword in database', (done) => {
+    request(app)
+      .post('/api/1.0/users')
+      .send({
+        username: 'user1',
+        email: 'user1@mail.com',
+        password: 'P4ssword',
+      })
+      .then(() => {
+        User.findAll().then((userlist) => {
+          const savedUser = userlist[0];
+          expect(savedUser.password).toBe('P4ssword');
           done();
         });
       });
