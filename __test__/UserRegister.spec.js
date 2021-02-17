@@ -105,4 +105,21 @@ describe('User Registration', () => {
     const body = response.body;
     expect(Object.keys(body.validationErrors)).toEqual(['username', 'email']);
   });
+  it.each`
+    field         | expectedMessage
+    ${`username`} | ${`Username cannot be null`}
+    ${`email`}    | ${`Email cannot be null`}
+    ${`password`} | ${`Password cannot be null`}
+  `('returns $expectedMessage when $field is null', async ({ field, expectedMessage }) => {
+    const user = {
+      username: 'user1',
+      email: 'user@mail.com',
+      password: 'P4ssword',
+    };
+    console.log(field);
+    user[field] = null;
+    const response = await postUser(user);
+    const body = response.body;
+    expect(body.validationErrors[field]).toBe(expectedMessage);
+  });
 });
