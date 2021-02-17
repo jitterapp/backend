@@ -1,0 +1,10 @@
+{
+  "database": {
+    "database": "jitter",
+    "username": "my-db-user",
+    "password": "db-password",
+    "dialect": "sqlite",
+    "storage": "./test.sqlite",
+    "logging": false
+  }
+}

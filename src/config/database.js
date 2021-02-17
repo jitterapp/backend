@@ -1,9 +1,14 @@
 const Sequelize = require('sequelize');
+const config = require('config');
 
-const sequelize = new Sequelize('jitter', 'my-db-user', 'db-password', {
-  dialect: 'sqlite',
-  storage: './database.sqlite',
-  logging: false,
+const dbConfig = config.get('database');
+
+const { password, database, username, dialect, storage, logging } = dbConfig;
+
+const sequelize = new Sequelize(database, username, password, {
+  dialect,
+  storage,
+  logging,
 });
 
 module.exports = sequelize;
