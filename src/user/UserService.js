@@ -8,4 +8,11 @@ const save = async (body) => {
   await User.create(user);
 };
 
-module.exports = { save };
+const findByEmail = async (email) => {
+  const user = await User.findOne({ where: { email: email } });
+  if (user) {
+    throw new Error('email is already in use');
+  }
+};
+
+module.exports = { save, findByEmail };
