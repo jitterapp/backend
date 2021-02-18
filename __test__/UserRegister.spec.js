@@ -105,22 +105,29 @@ describe('User Registration', () => {
     const body = response.body;
     expect(Object.keys(body.validationErrors)).toEqual(['username', 'email']);
   });
+  const username_null = 'Username cannot be null';
+  const username_size = `Must have min 4 and max 32 characters`;
+  const email_null = `Email cannot be null`;
+  const email_invalid = 'Email is not valid';
+  const password_null = `Password cannot be null`;
+  const password_size = `Password must be at least 6 characters`;
+  const password_pattern = `Password must have at least one lowercase letter, one uppercase, and 1 number`;
   it.each`
     field         | value              | expectedMessage
-    ${`username`} | ${null}            | ${`Username cannot be null`}
-    ${`username`} | ${'usr'}           | ${`Must have min 4 and max 32 characters`}
-    ${`username`} | ${'a'.repeat(33)}  | ${`Must have min 4 and max 32 characters`}
-    ${`email`}    | ${null}            | ${`Email cannot be null`}
-    ${`email`}    | ${'mail.com'}      | ${`Email is not valid`}
-    ${`email`}    | ${'user@mail'}     | ${`Email is not valid`}
-    ${`password`} | ${null}            | ${`Password cannot be null`}
-    ${`password`} | ${'P4'}            | ${`Password must be at least 6 characters`}
-    ${`password`} | ${'alllowercase'}  | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
-    ${`password`} | ${'ALLUPPERCASE'}  | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
-    ${`password`} | ${'1234567'}       | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
-    ${`password`} | ${'UPPERandlower'} | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
-    ${`password`} | ${'UPPER1234'}     | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
-    ${`password`} | ${'lower1234'}     | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
+    ${`username`} | ${null}            | ${username_null}
+    ${`username`} | ${'usr'}           | ${username_size}
+    ${`username`} | ${'a'.repeat(33)}  | ${username_size}
+    ${`email`}    | ${null}            | ${email_null}
+    ${`email`}    | ${'mail.com'}      | ${email_invalid}
+    ${`email`}    | ${'user@mail'}     | ${email_invalid}
+    ${`password`} | ${null}            | ${password_null}
+    ${`password`} | ${'P4'}            | ${password_size}
+    ${`password`} | ${'alllowercase'}  | ${password_pattern}
+    ${`password`} | ${'ALLUPPERCASE'}  | ${password_pattern}
+    ${`password`} | ${'1234567'}       | ${password_pattern}
+    ${`password`} | ${'UPPERandlower'} | ${password_pattern}
+    ${`password`} | ${'UPPER1234'}     | ${password_pattern}
+    ${`password`} | ${'lower1234'}     | ${password_pattern}
   `('returns $expectedMessage when $field is $value', async ({ field, expectedMessage, value }) => {
     const user = {
       username: 'user1',
