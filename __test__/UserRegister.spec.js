@@ -2,6 +2,8 @@ const request = require('supertest');
 const app = require('../src/app');
 const User = require('../src/user/User');
 const sequelize = require('../src/config/database');
+const nodemailerstub = require('nodemailer-stub');
+const EmailService = require('../src/email/EmailService');
 
 beforeAll(() => {
   return sequelize.sync();
@@ -105,26 +107,33 @@ describe('User Registration', () => {
     const body = response.body;
     expect(Object.keys(body.validationErrors)).toEqual(['username', 'email']);
   });
+  const username_null = 'Username cannot be null';
+  const username_size = `Must have min 4 and max 32 characters`;
+  const email_null = `Email cannot be null`;
+  const email_invalid = 'Email is not valid';
+  const password_null = `Password cannot be null`;
+  const password_size = `Password must be at least 6 characters`;
+  const password_pattern = `Password must have at least one lowercase letter, one uppercase, and 1 number`;
   it.each`
     field         | value              | expectedMessage
-    ${`username`} | ${null}            | ${`Username cannot be null`}
-    ${`username`} | ${'usr'}           | ${`Must have min 4 and max 32 characters`}
-    ${`username`} | ${'a'.repeat(33)}  | ${`Must have min 4 and max 32 characters`}
-    ${`email`}    | ${null}            | ${`Email cannot be null`}
-    ${`email`}    | ${'mail.com'}      | ${`Email is not valid`}
-    ${`email`}    | ${'user@mail'}     | ${`Email is not valid`}
-    ${`password`} | ${null}            | ${`Password cannot be null`}
-    ${`password`} | ${'P4'}            | ${`Password must be at least 6 characters`}
-    ${`password`} | ${'alllowercase'}  | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
-    ${`password`} | ${'ALLUPPERCASE'}  | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
-    ${`password`} | ${'1234567'}       | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
-    ${`password`} | ${'UPPERandlower'} | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
-    ${`password`} | ${'UPPER1234'}     | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
-    ${`password`} | ${'lower1234'}     | ${`Password must have at least one lowercase letter, one uppercase, and 1 number`}
+    ${`username`} | ${null}            | ${username_null}
+    ${`username`} | ${'usr'}           | ${username_size}
+    ${`username`} | ${'a'.repeat(33)}  | ${username_size}
+    ${`email`}    | ${null}            | ${email_null}
+    ${`email`}    | ${'mail.com'}      | ${email_invalid}
+    ${`email`}    | ${'user@mail'}     | ${email_invalid}
+    ${`password`} | ${null}            | ${password_null}
+    ${`password`} | ${'P4'}            | ${password_size}
+    ${`password`} | ${'alllowercase'}  | ${password_pattern}
+    ${`password`} | ${'ALLUPPERCASE'}  | ${password_pattern}
+    ${`password`} | ${'1234567'}       | ${password_pattern}
+    ${`password`} | ${'UPPERandlower'} | ${password_pattern}
+    ${`password`} | ${'UPPER1234'}     | ${password_pattern}
+    ${`password`} | ${'lower1234'}     | ${password_pattern}
   `('returns $expectedMessage when $field is $value', async ({ field, expectedMessage, value }) => {
     const user = {
       username: 'user1',
-      email: 'user@mail.com',
+      email: 'user1@mail.com',
       password: 'P4ssword',
     };
     user[field] = value;
@@ -148,5 +157,51 @@ describe('User Registration', () => {
     const response = await postUser(user);
     const body = response.body;
     expect(Object.keys(body.validationErrors)).toEqual(['username', 'email']);
+  });
+  it('creates a user in inactive mode', async () => {
+    await postUser();
+    const users = await User.findAll();
+    const savedUser = users[0];
+    expect(savedUser.inactive).toBe(true);
+  });
+  it('creates users in inactive mode even when the request body contains inactive as false', async () => {
+    const newUser = { ...validUser, inactive: false };
+    await postUser(newUser);
+    const users = await User.findAll();
+    const savedUser = users[0];
+    expect(savedUser.inactive).toBe(true);
+  });
+  it('creates an activation token for user', async () => {
+    const newUser = { ...validUser, inactive: false };
+    await postUser(newUser);
+    const users = await User.findAll();
+    const savedUser = users[0];
+    expect(savedUser.activationToken).toBeTruthy();
+  });
+  it('sends an account activation email with activation token', async () => {
+    await postUser();
+    const lastMail = nodemailerstub.interactsWithMail.lastMail();
+    expect(lastMail.to[0]).toBe('user1@mail.com');
+    const users = await User.findAll();
+    const savedUser = users[0];
+    expect(lastMail.content).toContain(savedUser.activationToken);
+  });
+  it('returns 502 bad gateway and email failure message when sending email fails', async () => {
+    const mockAccountActivation = jest
+      .spyOn(EmailService, 'sendAccountActivation')
+      .mockRejectedValue({ message: 'Failed to deliver email' });
+    const response = await postUser();
+    expect(response.status).toBe(502);
+    expect(response.body.message).toBe('E-mail Failure');
+    mockAccountActivation.mockRestore();
+  });
+  it('does not save user to database if activation email fails', async () => {
+    const mockAccountActivation = jest
+      .spyOn(EmailService, 'sendAccountActivation')
+      .mockRejectedValue({ message: 'Failed to deliver email' });
+    await postUser();
+    const users = await User.findAll();
+    expect(users.length).toBe(0);
+    mockAccountActivation.mockRestore();
   });
 });

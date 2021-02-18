@@ -12,3 +12,5 @@
 - cross-env (makes it so you can have a single command without worrying about setting or using the environment variable properly)
 - config (lets you define a set of default parameters, and extend them for different deployment environments)
 - express-validator (validations)
+- nodemailer (email verofication)
+- nodemailer-stub (for testing nodemailer)
