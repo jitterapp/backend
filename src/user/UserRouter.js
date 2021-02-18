@@ -60,7 +60,7 @@ router.post(
       await UserService.save(req.body);
       return res.send({ message: 'User created' });
     } catch (err) {
-      return res.status(502).send({ message: 'E-mail Failure' });
+      return res.status(502).send({ message: err.message });
     }
   }
 );
