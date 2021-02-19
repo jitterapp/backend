@@ -2,7 +2,6 @@ const express = require('express');
 const UserService = require('./UserService');
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
-const { request } = require('express');
 
 // const validateUsername = (req, res, next) => {
 //   const user = req.body;
