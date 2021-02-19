@@ -224,3 +224,56 @@ describe('User Registration', () => {
     expect(users.length).toBe(0);
   });
 });
+
+describe('Account activation', () => {
+  it('it activates the account when the correct token is sent', async () => {
+    await postUser();
+    let users = await User.findAll();
+    const token = users[0].activationToken;
+
+    await request(app)
+      .post('/api/1.0/users/token/' + token)
+      .send();
+    users = await User.findAll();
+    expect(users[0].inactive).toBe(false);
+  });
+
+  it('removes the token from user table after successful activation', async () => {
+    await postUser();
+    let users = await User.findAll();
+    const token = users[0].activationToken;
+
+    await request(app)
+      .post('/api/1.0/users/token/' + token)
+      .send();
+    users = await User.findAll();
+    expect(users[0].activationToken).toBeFalsy();
+  });
+  it('does not activate the account when token is wrong', async () => {
+    await postUser();
+    let users = await User.findAll();
+    const token = 'this-token-does-not-exist';
+
+    await request(app)
+      .post('/api/1.0/users/token/' + token)
+      .send();
+    users = await User.findAll();
+    expect(users[0].inactive).toBe(true);
+  });
+  it('returns bad request when the token is wrong', async () => {
+    await postUser();
+    const token = 'this-token-does-not-exist';
+    const response = await request(app)
+      .post('/api/1.0/users/token/' + token)
+      .send();
+    expect(response.status).toBe(400);
+  });
+  it('returns message when wrong token is sent', async () => {
+    await postUser();
+    const token = 'this-token-does-not-exist';
+    const response = await request(app)
+      .post('/api/1.0/users/token/' + token)
+      .send();
+    expect(response.body.message).toBe('This account is either active or the token is invalid');
+  });
+});
