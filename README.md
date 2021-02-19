@@ -13,4 +13,6 @@
 - config (lets you define a set of default parameters, and extend them for different deployment environments)
 - express-validator (validations)
 - nodemailer (email verofication)
-- nodemailer-stub (for testing nodemailer)
+- nodemailer-stub (useful for testing the emails before actually sending anything. It does not send anything)
+- jest-watch-typeahead (helps with finding tests)
+- smtp server (Node.JS module for creating SMTP and LMTP server instances on the fly.)
