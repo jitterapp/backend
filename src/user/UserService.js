@@ -36,7 +36,6 @@ const findByEmail = async (email) => {
 
 const activate = async (token) => {
   const user = await User.findOne({ where: { activationToken: token } });
-  console.log(token, user, 'hererere');
   if (!user) {
     throw new InvalidTokenException();
   }
