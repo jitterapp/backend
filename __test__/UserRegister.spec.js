@@ -276,4 +276,50 @@ describe('Account activation', () => {
       .send();
     expect(response.body.message).toBe('This account is either active or the token is invalid');
   });
+  it('returns validations failure message in error response body when registration fails', async () => {
+    const response = await postUser({
+      username: null,
+      email: 'invalidUser@mail.com',
+      password: 'P4ssword',
+    });
+    expect(response.body.message).toBe('Validation failure');
+  });
+});
+
+describe('Error model', () => {
+  it('returns path, timestamp, message, and validationErrors in response when validation fails', async () => {
+    const response = await postUser({
+      ...validUser,
+      username: null,
+    });
+    const body = response.body;
+    expect(Object.keys(body)).toEqual(['path', 'timestamp', 'message', 'validationErrors']);
+  });
+  it('returns path, timestamp, and message in response when request fails other than validation error', async () => {
+    const token = 'this-token-does-not-exist';
+    const response = await request(app)
+      .post('/api/1.0/users/token/' + token)
+      .send();
+    const body = response.body;
+    expect(Object.keys(body)).toEqual(['path', 'timestamp', 'message']);
+  });
+  it('returns path in error body', async () => {
+    const token = 'this-token-does-not-exist';
+    const response = await request(app)
+      .post('/api/1.0/users/token/' + token)
+      .send();
+    const body = response.body;
+    expect(body.path).toEqual('/api/1.0/users/token/' + token);
+  });
+  it('returns timestamp in milliseconds within 5 seconds in error body', async () => {
+    const nowInMillis = new Date().getTime();
+    const fiveSecondsLater = nowInMillis + 5 * 1000;
+    const token = 'this-token-does-not-exist';
+    const response = await request(app)
+      .post('/api/1.0/users/token/' + token)
+      .send();
+    const body = response.body;
+    expect(body.timestamp).toBeGreaterThan(nowInMillis);
+    expect(body.timestamp).toBeLessThan(fiveSecondsLater);
+  });
 });
