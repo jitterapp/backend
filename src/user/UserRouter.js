@@ -20,7 +20,12 @@ router.post(
     .isEmail()
     .withMessage('Email is not valid')
     .bail()
-    .custom(UserService.findByEmail),
+    .custom(async (email) => {
+      const user = await UserService.findByEmail(email);
+      if (user) {
+        throw new Error('email is already in use');
+      }
+    }),
   check('password')
     .notEmpty()
     .withMessage('Password cannot be null')

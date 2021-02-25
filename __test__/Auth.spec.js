@@ -36,4 +36,16 @@ describe('Authentication', () => {
     expect(response.body.username).toBe(user.username);
     expect(Object.keys(response.body)).toEqual(['id', 'username']);
   });
+  it('returns 401 when user does not exists', async () => {
+    const response = await postAuthentication({ email: 'user1@mail.com', password: 'P4ssword' });
+    expect(response.status).toBe(401);
+  });
+  it('returns returns proper error body when authentication fails', async () => {
+    // const nowInMillis = new Date().getTime();
+    // const response = await postAuthentication({ email: 'user1@mail.com', password: 'P4ssword' });
+    // const error = response.body;
+    // expect(error.path).toBe('/api/1.0/auth');
+    // expect(error.timestamp).toBeGreaterThan(nowInMillis);
+    // expect(Object.keys(error)).toEqual(['path', 'timestamp', 'message']);
+  });
 });

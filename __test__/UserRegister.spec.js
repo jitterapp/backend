@@ -34,9 +34,9 @@ afterAll(async () => {
   await server.close();
 });
 
-beforeEach(() => {
+beforeEach(async () => {
   simulateSMTPFailure = false;
-  return User.destroy({ truncate: true }); //clean user table before each test
+  await User.destroy({ truncate: true }); //clean user table before each test
 });
 
 const validUser = {
@@ -168,7 +168,7 @@ describe('User Registration', () => {
     expect(body.validationErrors[field]).toBe(expectedMessage);
   });
 
-  it('returns email in use then same email is already in use', async () => {
+  it('returns email in use when same email is already in use', async () => {
     await User.create({ ...validUser });
     const response = await postUser();
     expect(response.body.validationErrors.email).toBe('email is already in use');
