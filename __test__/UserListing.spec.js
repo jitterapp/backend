@@ -60,4 +60,10 @@ describe('Listing users', () => {
     const response = await getUsers();
     expect(response.body.totalPages).toEqual(2);
   });
+  it('returns 5 users and corresponding size indicator when size is set as 5 in req parameter ', async () => {
+    await addUsers(15, 7);
+    const response = await getUsers().query({ size: 5 });
+    expect(response.body.content.length).toBe(5);
+    expect(response.body.size).toBe(5);
+  });
 });
