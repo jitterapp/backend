@@ -3,28 +3,7 @@ const UserService = require('./UserService');
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const ValidationException = require('../error/ValidationException');
-const { response } = require('express');
-
-// const validateUsername = (req, res, next) => {
-//   const user = req.body;
-//   if (user.username === null) {
-//     req.validationErrors = {
-//       username: 'Username cannot be null',
-//     };
-//   }
-//   next();
-// };
-
-// const validateEmail = (req, res, next) => {
-//   const user = req.body;
-//   if (user.email === null) {
-//     req.validationErrors = {
-//       ...req.validationErrors,
-//       email: 'Email cannot be null',
-//     };
-//   }
-//   next();
-// };
+const pagination = require('../middleware/pagination');
 
 router.post(
   '/api/1.0/users',
@@ -75,21 +54,6 @@ router.post('/api/1.0/users/token/:token', async (req, res, next) => {
     next(err);
   }
 });
-
-const pagination = (req, res, next) => {
-  const pageAsNumber = Number.parseInt(req.query.page);
-  const sizeAsNumber = Number.parseInt(req.query.size);
-  let page = Number.isNaN(pageAsNumber) ? 0 : pageAsNumber;
-  if (page < 0) {
-    page = 0;
-  }
-  let size = Number.isNaN(sizeAsNumber) ? 0 : sizeAsNumber;
-  if (size > 10 || size < 1) {
-    size = 10;
-  }
-  req.pagination = { size, page };
-  next();
-};
 
 router.get('/api/1.0/users', pagination, async (req, res) => {
   const { page, size } = req.pagination;
