@@ -7,8 +7,8 @@ beforeAll(async () => {
   await sequelize.sync();
 });
 
-beforeEach(() => {
-  return User.destroy({ truncate: true }); //clean user table before each test
+beforeEach(async () => {
+  await User.destroy({ truncate: true }); //clean user table before each test
 });
 
 const getUsers = () => {
