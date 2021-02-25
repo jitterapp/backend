@@ -4,8 +4,13 @@ const UserService = require('../user/UserService');
 const AuthenticationException = require('./AuthenticationException');
 const bcrypt = require('bcrypt');
 const ForbiddenException = require('./ForbiddenException');
+const { check, validationResult } = require('express-validator');
 
-router.post('/api/1.0/auth', async (req, res, next) => {
+router.post('/api/1.0/auth', check('email').isEmail(), async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new AuthenticationException());
+  }
   const { email, password } = req.body;
   const user = await UserService.findByEmail(email);
   if (!user) {

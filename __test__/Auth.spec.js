@@ -77,4 +77,9 @@ describe('Authentication', () => {
     const response = await postAuthentication({ email: 'user1@mail.com', password: 'P4ssword' });
     expect(response.body.message).toBe('Account is inactive');
   });
+  it('returns a 401 when email is not valid', async () => {
+    await addUser({ ...activeUser, inactive: true });
+    const response = await postAuthentication({ email: 'wrong@mail.com', password: 'P4ssword' });
+    expect(response.status).toBe(401);
+  });
 });
