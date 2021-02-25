@@ -84,4 +84,16 @@ describe('Listing users', () => {
     expect(response.body.content.length).toBe(10);
     expect(response.body.size).toBe(10);
   });
+  it('returns 10 users and corresponding size indicator when size is set to 0 ', async () => {
+    await addUsers(15, 7);
+    const response = await getUsers().query({ size: 0 });
+    expect(response.body.content.length).toBe(10);
+    expect(response.body.size).toBe(10);
+  });
+  it('returns page as 0 and size is 10 when non numeric query params are provided ', async () => {
+    await addUsers(15, 7);
+    const response = await getUsers().query({ size: 'size', page: 'page' });
+    expect(response.body.page).toBe(0);
+    expect(response.body.size).toBe(10);
+  });
 });
