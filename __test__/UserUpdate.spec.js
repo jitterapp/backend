@@ -35,14 +35,14 @@ describe('User update', () => {
   it('returns forbidden when request sent without basic authentication', async () => {
     const response = await putUser();
     expect(response.status).toBe(403);
-  }, 15000);
+  });
   it('returns error body with a message when authroization fails', async () => {
     const nowInMillis = new Date().getTime();
     const response = await putUser();
     expect(response.body.path).toBe('/api/1.0/users/5');
     expect(response.body.timestamp).toBeGreaterThan(nowInMillis);
     expect(response.body.message).toBe('Not authorized to edit user');
-  }, 1500);
+  });
   it('returns forbidden when request is sent with incorrect email in basic authorization', async () => {
     await addUser();
     const response = await putUser(5, null, { auth: { email: 'wrongemail', password: 'P4ssword' } });
