@@ -38,4 +38,4 @@
 ```console
   npm run start
 ```
-#### Use a fake email generator like [this](https://temp-mail.org/en/) when testing smtp post. 
+#### Use a fake email generator like [this](https://temp-mail.org/en/) when testing smtp post on frontend. 
