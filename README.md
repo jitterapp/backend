@@ -20,3 +20,22 @@
 
 
 ### API documentation [click here](https://www.getpostman.com/collections/ccd93ffb1551659286e4)
+
+
+
+
+### Setup
+
+#### Command to run in terminal to download dependencies
+```console
+  npm install 
+```
+#### Command to run tests. When test runner opens you can choose from a multitude of options. 
+```console
+  npm run test
+```
+#### Command to start server with hot reloading.  
+```console
+  npm run start
+```
+#### Use a fake email generator like [this](https://temp-mail.org/en/) when testing smtp post on frontend. 
