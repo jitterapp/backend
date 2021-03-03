@@ -15,9 +15,10 @@ beforeEach(async () => {
 const auth = async (options = {}) => {
   let token;
   if (options.auth) {
-    const response = await request(app).get('/api/1.0/users').send(options.auth);
+    const response = await request(app).post('/api/1.0/auth').send(options.auth);
     token = response.body.token;
   }
+
   return token;
 };
 
@@ -113,9 +114,10 @@ describe('Listing users', () => {
     expect(response.body.size).toBe(10);
   });
 
-  it('returns user page with users except the user who is logged when request has valid authorization ', async () => {
+  fit('returns user page with users except the user who is logged when request has valid authorization ', async () => {
     await addUsers(11);
     const token = await auth({ auth: { email: 'user1@mail.com', password: 'P4ssword' } });
+    console.log(token, 'token');
     const response = await getUsers({ token: token });
     // we are showing one page becuase its 10 users per page and we are not showing the logged in user.
     expect(response.body.totalPages).toBe(1);
