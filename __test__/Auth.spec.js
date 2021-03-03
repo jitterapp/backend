@@ -3,6 +3,7 @@ const app = require('../src/app');
 const User = require('../src/user/User');
 const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
+const { describe } = require('../src/user/User');
 
 beforeAll(async () => {
   await sequelize.sync();
@@ -86,5 +87,12 @@ describe('Authentication', () => {
     await addUser();
     const response = await postAuthentication({ email: 'user1@mail.com', password: 'P4ssword' });
     expect(response.body.token).not.toBeUndefined();
+  });
+});
+
+describe('logout', () => {
+  it('returns 200 okay when unauthorized req sends for logout', async () => {
+    const response = await request(app).post('api/1.0/logout').send();
+    expect(response.status).toBe(200);
   });
 });
