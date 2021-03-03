@@ -3,6 +3,7 @@ const app = require('../src/app');
 const User = require('../src/user/User');
 const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
+const Token = require('../src/auth/Token');
 
 beforeAll(async () => {
   await sequelize.sync();
@@ -20,6 +21,14 @@ const addUser = async (user = { ...activeUser }) => {
   return await User.create(user);
 };
 
+const postLogout = (options = {}) => {
+  const agent = request(app).post('/api/1.0/logout');
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.send();
+};
+
 const postAuthentication = async (credentials) => {
   return await request(app).post('/api/1.0/auth').send(credentials);
 };
@@ -30,12 +39,12 @@ describe('Authentication', () => {
     const response = await postAuthentication({ email: 'user1@mail.com', password: 'P4ssword' });
     expect(response.status).toBe(200);
   });
-  it('returns only user id and username when login is a success', async () => {
+  it('returns user id, token, and username when login is a success', async () => {
     const user = await addUser();
     const response = await postAuthentication({ email: 'user1@mail.com', password: 'P4ssword' });
     expect(response.body.id).toBe(user.id);
     expect(response.body.username).toBe(user.username);
-    expect(Object.keys(response.body)).toEqual(['id', 'username']);
+    expect(Object.keys(response.body)).toEqual(['id', 'username', 'token']);
   });
   it('returns 401 when user does not exists', async () => {
     const response = await postAuthentication({ email: 'user1@mail.com', password: 'P4ssword' });
@@ -81,5 +90,25 @@ describe('Authentication', () => {
     await addUser({ ...activeUser, inactive: true });
     const response = await postAuthentication({ email: 'wrong@mail.com', password: 'P4ssword' });
     expect(response.status).toBe(401);
+  });
+  it('returns a token in response body when credentials are correct', async () => {
+    await addUser();
+    const response = await postAuthentication({ email: 'user1@mail.com', password: 'P4ssword' });
+    expect(response.body.token).not.toBeUndefined();
+  });
+});
+
+describe('logout', () => {
+  it('returns 200 okay when unauthorized req sends for logout', async () => {
+    const response = await postLogout();
+    expect(response.status).toBe(200);
+  });
+  it('removes the token from database', async () => {
+    await addUser();
+    const response = await postAuthentication({ email: 'user1@mail.com', password: 'P4ssword' });
+    const token = response.body.token;
+    await postLogout({ token: token });
+    const storedToken = await Token.findOne({ where: { token: token } });
+    expect(storedToken).toBeNull();
   });
 });

@@ -14,4 +14,5 @@
 - express-validator (validations)
 - nodemailer (email verofication)
 - jest-watch-typeahead (helps with finding tests)
-- smtp server (Node.JS module for creating SMTP and LMTP server instances on the fly.)
+- smtp server (Node.JS module for creating SMTP and LMTP server instances on the fly)
+- jwt strategy for auth
