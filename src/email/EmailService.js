@@ -18,6 +18,9 @@ const sendAccountActivation = async (email, token) => {
   if (process.env.NODE_ENV === 'development') {
     console.log('url: ' + nodemailer.getTestMessageUrl(info));
   }
+  if (process.env.NODE_ENV === 'production') {
+    return 'url: ' + nodemailer.getTestMessageUrl(info);
+  }
 };
 
 module.exports = {
