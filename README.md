@@ -16,3 +16,7 @@
 - jest-watch-typeahead (helps with finding tests)
 - smtp server (Node.JS module for creating SMTP and LMTP server instances on the fly)
 - jwt strategy for auth
+
+
+
+### API documentation [click here](https://www.getpostman.com/collections/ccd93ffb1551659286e4)
