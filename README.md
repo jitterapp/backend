@@ -20,3 +20,10 @@
 
 
 ### API documentation [click here](https://www.getpostman.com/collections/ccd93ffb1551659286e4)
+
+
+
+
+# Setup
+
+# Use a fake email generator like [this](https://temp-mail.org/en/) when testing smtp post. 
