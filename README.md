@@ -24,6 +24,18 @@
 
 
 
-# Setup
+### Setup
 
-# Use a fake email generator like [this](https://temp-mail.org/en/) when testing smtp post. 
+#### Command to run in terminal to download dependencies
+```console
+  npm install 
+```
+#### Command to run tests. When test runner opens you can choose from a multitude of options. 
+```console
+  npm run test
+```
+#### Command to start server with hot reloading.  
+```console
+  npm run start
+```
+#### Use a fake email generator like [this](https://temp-mail.org/en/) when testing smtp post. 
