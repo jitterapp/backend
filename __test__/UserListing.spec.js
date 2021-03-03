@@ -117,7 +117,6 @@ describe('Listing users', () => {
   it('returns user page with users except the user who is logged when request has valid authorization ', async () => {
     await addUsers(11);
     const token = await auth({ auth: { email: 'user1@mail.com', password: 'P4ssword' } });
-    console.log(token, 'token');
     const response = await getUsers({ token: token });
     // we are showing one page becuase its 10 users per page and we are not showing the logged in user.
     expect(response.body.totalPages).toBe(1);
