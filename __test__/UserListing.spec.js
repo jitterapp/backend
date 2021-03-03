@@ -114,7 +114,7 @@ describe('Listing users', () => {
     expect(response.body.size).toBe(10);
   });
 
-  fit('returns user page with users except the user who is logged when request has valid authorization ', async () => {
+  it('returns user page with users except the user who is logged when request has valid authorization ', async () => {
     await addUsers(11);
     const token = await auth({ auth: { email: 'user1@mail.com', password: 'P4ssword' } });
     console.log(token, 'token');
