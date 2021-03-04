@@ -21,6 +21,7 @@
 
 ### schema [click here](https://dbdiagram.io/d/5fb86c243a78976d7b7ccee3)
 ### API documentation [click here](https://www.getpostman.com/collections/ccd93ffb1551659286e4)
+### design of app [click here](https://www.figma.com/file/AsccJfyFTEklKV9SlgZ0wZ/Jitter-Hi-Fi?node-id=0%3A1)
 
 
 
