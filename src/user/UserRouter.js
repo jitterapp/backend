@@ -59,7 +59,6 @@ router.post(
 
 router.get('/api/1.0/users/token/:token', async (req, res, next) => {
   const token = req.params.token;
-  console.log(token);
 
   try {
     await UserService.activate(token);
