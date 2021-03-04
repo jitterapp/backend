@@ -51,7 +51,7 @@ router.post(
   }
 );
 
-router.post('/api/1.0/users/token/:token', async (req, res, next) => {
+router.get('/api/1.0/users/token/:token', async (req, res, next) => {
   const token = req.params.token;
 
   try {
