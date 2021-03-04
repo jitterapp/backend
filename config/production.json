@@ -1,9 +1,9 @@
 {
   "database": {
-    "host": "localhost",
-    "database": "jitter",
-    "username": "root",
-    "password": "root",
+    "host": "us-cdbr-east-03.cleardb.com",
+    "database": "heroku_d5fe4a8a70f4ba0",
+    "username": "bae1ab043ed789",
+    "password": "a7f2a093",
     "dialect": "mysql",
     "logging": false
   },

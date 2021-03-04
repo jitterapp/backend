@@ -7,6 +7,9 @@ class User extends Model {}
 
 User.init(
   {
+    fullname: {
+      type: Sequelize.STRING,
+    },
     username: {
       type: Sequelize.STRING,
     },
