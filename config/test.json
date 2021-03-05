@@ -1,11 +1,11 @@
 {
   "api_base": "http://localhost:3000",
   "database": {
-    "host": "localhost",
-    "database": "jitter-test",
-    "username": "root",
-    "password": "root",
-    "dialect": "mysql",
+    "database": "jitter",
+    "username": "my-db-user",
+    "password": "db-password",
+    "dialect": "sqlite",
+    "storage": ":memory:",
     "logging": false
   },
   "mail": {
