@@ -13,6 +13,9 @@ User.init(
     username: {
       type: Sequelize.STRING,
     },
+    dob: {
+      type: Sequelize.DATE,
+    },
     email: {
       type: Sequelize.STRING,
       unique: true,
