@@ -1,4 +1,5 @@
 {
+  "api_base": "http://localhost:3000",
   "database": {
     "database": "jitter",
     "username": "my-db-user",

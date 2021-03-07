@@ -28,3 +28,4 @@ sendgrid.env
 
 # Custom
 temp_resources
+config/development.json

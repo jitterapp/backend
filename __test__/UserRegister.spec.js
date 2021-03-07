@@ -45,6 +45,8 @@ const validUser = {
   username: 'user1',
   email: 'user1@mail.com',
   password: 'P4ssword',
+  dob: '1999-12-22',
+  fullname: 'full name',
 };
 
 const postUser = (user = validUser) => {
@@ -68,12 +70,14 @@ describe('User Registration', () => {
     expect(userList.length).toBe(1);
   });
 
-  it('it saves the username and email to the database', async () => {
+  it('it saves the username, fullname, dob and email to the database', async () => {
     await postUser();
     const userList = await User.findAll();
     const savedUser = userList[0];
     expect(savedUser.username).toBe('user1');
     expect(savedUser.email).toBe('user1@mail.com');
+    expect(savedUser.fullname).toBe('full name');
+    expect(savedUser.dob).toString('1999-12-22T00:00:00.000Z');
   });
 
   it('hashes the pasword in database', async () => {
@@ -88,6 +92,7 @@ describe('User Registration', () => {
       username: null,
       email: 'user1@mail.com',
       password: 'P4ssword',
+      dob: '1999-12-22',
     });
     expect(response.status).toBe(400);
   });
@@ -96,6 +101,7 @@ describe('User Registration', () => {
       username: null,
       email: 'user1@mail.com',
       password: 'P4ssword',
+      dob: '1999-12-22',
     });
     const body = response.body;
     expect(body.validationErrors).not.toBeUndefined();
@@ -105,6 +111,8 @@ describe('User Registration', () => {
       username: null,
       email: 'user1@mail.com',
       password: 'P4ssword',
+      fullname: 'full name',
+      dob: '1999-12-22',
     });
     const body = response.body;
     expect(body.validationErrors.username).toBe('Username cannot be null');
@@ -114,15 +122,52 @@ describe('User Registration', () => {
       username: 'user1',
       email: null,
       password: 'P4ssword',
+      dob: '1999-12-22',
+      fullname: 'full name',
     });
     const body = response.body;
     expect(body.validationErrors.email).toBe('Email cannot be null');
+  });
+  it('returns fullname cannot be null when fullname is null', async () => {
+    const response = await postUser({
+      username: 'user1',
+      email: 'user1@mail.com',
+      password: 'P4ssword',
+      dob: '1999-12-22',
+      fullname: null,
+    });
+    const body = response.body;
+    expect(body.validationErrors.fullname).toBe('Fullname cannot be null');
+  });
+  it('returns dob Invalid value when dob is null', async () => {
+    const response = await postUser({
+      username: 'user1',
+      email: 'user1@mail.com',
+      password: 'P4ssword',
+      dob: null,
+      fullname: 'full name',
+    });
+    const body = response.body;
+    expect(body.validationErrors.dob).toBe('Invalid value');
+  });
+  it('returns dob Invalid value when dob is invalid format', async () => {
+    const response = await postUser({
+      username: 'user1',
+      email: 'user1@mail.com',
+      password: 'P4ssword',
+      dob: '19990223',
+      fullname: 'full name',
+    });
+    const body = response.body;
+    expect(body.validationErrors.dob).toBe('Invalid value');
   });
   it('returns errors for both when username and email is null', async () => {
     const response = await postUser({
       username: null,
       email: null,
       password: 'P4ssword',
+      fullname: null,
+      dob: '1999-12-22',
     });
 
     /*
@@ -133,7 +178,7 @@ describe('User Registration', () => {
     */
 
     const body = response.body;
-    expect(Object.keys(body.validationErrors)).toEqual(['username', 'email']);
+    expect(Object.keys(body.validationErrors)).toEqual(['username', 'fullname', 'email']);
   });
   const username_null = 'Username cannot be null';
   const username_size = `Must have min 4 and max 32 characters`;
@@ -163,6 +208,7 @@ describe('User Registration', () => {
       username: 'user1',
       email: 'user1@mail.com',
       password: 'P4ssword',
+      fullname: 'full name',
     };
     user[field] = value;
     const response = await postUser(user);
@@ -181,6 +227,8 @@ describe('User Registration', () => {
       username: null,
       email: validUser.email,
       password: 'P4ssword',
+      fullname: 'full name',
+      dob: '1999-12-22',
     };
     const response = await postUser(user);
     const body = response.body;
@@ -234,7 +282,7 @@ describe('Account activation', () => {
     const token = users[0].activationToken;
 
     await request(app)
-      .post('/api/1.0/users/token/' + token)
+      .get('/api/1.0/users/token/' + token)
       .send();
     users = await User.findAll();
     expect(users[0].inactive).toBe(false);
@@ -246,7 +294,7 @@ describe('Account activation', () => {
     const token = users[0].activationToken;
 
     await request(app)
-      .post('/api/1.0/users/token/' + token)
+      .get('/api/1.0/users/token/' + token)
       .send();
     users = await User.findAll();
     expect(users[0].activationToken).toBeFalsy();
@@ -257,7 +305,7 @@ describe('Account activation', () => {
     const token = 'this-token-does-not-exist';
 
     await request(app)
-      .post('/api/1.0/users/token/' + token)
+      .get('/api/1.0/users/token/' + token)
       .send();
     users = await User.findAll();
     expect(users[0].inactive).toBe(true);
@@ -266,7 +314,7 @@ describe('Account activation', () => {
     await postUser();
     const token = 'this-token-does-not-exist';
     const response = await request(app)
-      .post('/api/1.0/users/token/' + token)
+      .get('/api/1.0/users/token/' + token)
       .send();
     expect(response.status).toBe(400);
   });
@@ -274,7 +322,7 @@ describe('Account activation', () => {
     await postUser();
     const token = 'this-token-does-not-exist';
     const response = await request(app)
-      .post('/api/1.0/users/token/' + token)
+      .get('/api/1.0/users/token/' + token)
       .send();
     expect(response.body.message).toBe('This account is either active or the token is invalid');
   });
@@ -283,6 +331,7 @@ describe('Account activation', () => {
       username: null,
       email: 'invalidUser@mail.com',
       password: 'P4ssword',
+      fullname: 'full name',
     });
     expect(response.body.message).toBe('Validation failure');
   });
@@ -300,7 +349,7 @@ describe('Error model', () => {
   it('returns path, timestamp, and message in response when request fails other than validation error', async () => {
     const token = 'this-token-does-not-exist';
     const response = await request(app)
-      .post('/api/1.0/users/token/' + token)
+      .get('/api/1.0/users/token/' + token)
       .send();
     const body = response.body;
     expect(Object.keys(body)).toEqual(['path', 'timestamp', 'message']);
@@ -308,7 +357,7 @@ describe('Error model', () => {
   it('returns path in error body', async () => {
     const token = 'this-token-does-not-exist';
     const response = await request(app)
-      .post('/api/1.0/users/token/' + token)
+      .get('/api/1.0/users/token/' + token)
       .send();
     const body = response.body;
     expect(body.path).toEqual('/api/1.0/users/token/' + token);
@@ -318,7 +367,7 @@ describe('Error model', () => {
     const fiveSecondsLater = nowInMillis + 5 * 1000;
     const token = 'this-token-does-not-exist';
     const response = await request(app)
-      .post('/api/1.0/users/token/' + token)
+      .get('/api/1.0/users/token/' + token)
       .send();
     const body = response.body;
     expect(body.timestamp).toBeGreaterThan(nowInMillis);
