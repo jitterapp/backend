@@ -1,5 +1,4 @@
 const TokenService = require('../auth/TokenService');
-const ForbiddenException = require('../error/ForbiddenException');
 
 const tokenAuthentication = async (req, res, next) => {
   const authorization = req.headers.authorization;
@@ -7,16 +6,9 @@ const tokenAuthentication = async (req, res, next) => {
     const token = authorization.substring(7); //bearer + ' '
     try {
       const user = await TokenService.verify(token);
-      if (!user) {
-        return next(new ForbiddenException('Not authorized'));
-      }
       req.authenticatedUser = user;
       // eslint-disable-next-line no-empty
-    } catch (error) {
-      return next(new ForbiddenException('Not authorized'));
-    }
-  } else {
-    return next(new ForbiddenException('Not authorized'));
+    } catch (error) {}
   }
   next();
 };

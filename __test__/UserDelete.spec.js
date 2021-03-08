@@ -49,7 +49,7 @@ describe('User delete', () => {
     const response = await deleteUser(5);
     expect(response.body.path).toBe('/api/1.0/users/5');
     expect(response.body.timestamp).toBeGreaterThan(nowInMillis);
-    expect(response.body.message).toBe('Not authorized to delete user');
+    expect(response.body.message).toBe('Not authorized');
   });
 
   it('returns forbidden when delete request is sent with correct credentials for different user ', async () => {

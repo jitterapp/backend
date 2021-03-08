@@ -1,11 +1,12 @@
 const express = require('express');
 const UserService = require('./UserService');
 const router = express.Router();
-const { check, validationResult } = require('express-validator');
-const ValidationException = require('../error/ValidationException');
+const { check } = require('express-validator');
 const pagination = require('../middleware/pagination');
+const validateRequest = require('../middleware/validateRequest');
 const ForbiddenException = require('../error/ForbiddenException');
 const tokenAuthentication = require('../middleware/tokenAuthentication');
+const tokenAuthOrNot = require('../middleware/tokenAuthOrNot');
 
 router.post(
   '/api/1.0/users',
@@ -44,11 +45,8 @@ router.post(
     .bail()
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/)
     .withMessage('Password must have at least one lowercase letter, one uppercase, and 1 number'),
+  validateRequest,
   async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return next(new ValidationException(errors.array()));
-    }
     try {
       await UserService.save(req.body);
       return res.send({ message: 'User created' });
@@ -69,7 +67,7 @@ router.get('/api/1.0/users/token/:token', async (req, res, next) => {
   }
 });
 
-router.get('/api/1.0/users', pagination, tokenAuthentication, async (req, res) => {
+router.get('/api/1.0/users', pagination, tokenAuthOrNot, async (req, res) => {
   const authenticatedUser = req.authenticatedUser;
   const { page, size } = req.pagination;
 
@@ -89,7 +87,7 @@ router.get('/api/1.0/users/:id', async (req, res, next) => {
 router.put('/api/1.0/users/:id', tokenAuthentication, async (req, res, next) => {
   const authenticatedUser = req.authenticatedUser;
 
-  if (!authenticatedUser || authenticatedUser.id !== req.params.id) {
+  if (authenticatedUser.id !== Number(req.params.id)) {
     return next(new ForbiddenException('Not authorized to edit user'));
   }
   await UserService.updateUser(req.params.id, req.body);
@@ -98,7 +96,7 @@ router.put('/api/1.0/users/:id', tokenAuthentication, async (req, res, next) => 
 
 router.delete('/api/1.0/users/:id', tokenAuthentication, async (req, res, next) => {
   const authenticatedUser = req.authenticatedUser;
-  if (!authenticatedUser || authenticatedUser.id !== req.params.id) {
+  if (authenticatedUser.id !== Number(req.params.id)) {
     return next(new ForbiddenException('Not authorized to delete user'));
   }
   await UserService.deleteUser(req.params.id);

@@ -50,7 +50,7 @@ describe('User update', () => {
     const response = await putUser();
     expect(response.body.path).toBe('/api/1.0/users/5');
     expect(response.body.timestamp).toBeGreaterThan(nowInMillis);
-    expect(response.body.message).toBe('Not authorized to edit user');
+    expect(response.body.message).toBe('Not authorized');
   });
   it('returns forbidden when request is sent with incorrect email in basic authorization', async () => {
     await addUser();
