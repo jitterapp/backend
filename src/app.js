@@ -3,8 +3,11 @@ const UserRouter = require('./user/UserRouter');
 const app = express();
 const errorHandler = require('./error/ErrorHandler');
 const AuthticationRouter = require('./auth/AuthenticationRouter');
+const tokenAuthentication = require('./middleware/tokenAuthentication');
 
 app.use(express.json());
+
+app.use(tokenAuthentication);
 
 app.use(UserRouter);
 app.use(AuthticationRouter);

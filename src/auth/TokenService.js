@@ -22,6 +22,8 @@ const verify = async (token) => {
       },
     },
   });
+  tokenInDb.lastUsedAt = new Date();
+  await tokenInDb.save();
   const userId = tokenInDb.userId;
   return { id: userId };
 };

@@ -135,4 +135,33 @@ describe('Token Expiration', () => {
     const response = await putUser(savedUser.id, validUpdate, { token: token });
     expect(response.status).toBe(403);
   });
+  it('returns refreshes lastUsedAt when unexpired token is used', async () => {
+    const savedUser = await addUser();
+    const token = 'test-token';
+    const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000); // 1 week + 1 milisecond
+    await Token.create({
+      token: token,
+      userId: savedUser.id,
+      lastUsedAt: fourDaysAgo,
+    });
+    const validUpdate = { username: 'user1-updated' };
+    const rightBeforeSendingReq = new Date();
+    await putUser(savedUser.id, validUpdate, { token: token });
+    const tokenInDb = await Token.findOne({ where: { token: token } });
+    expect(tokenInDb.lastUsedAt.getTime()).toBeGreaterThan(rightBeforeSendingReq.getTime());
+  });
+  it('returns refreshes lastUsedAt when unexpired token is used for unauthenticated endpoint', async () => {
+    const savedUser = await addUser();
+    const token = 'test-token';
+    const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000); // 1 week + 1 milisecond
+    await Token.create({
+      token: token,
+      userId: savedUser.id,
+      lastUsedAt: fourDaysAgo,
+    });
+    const rightBeforeSendingReq = new Date();
+    await request(app).get('/api/1.0/users/5').set(`Authorization`, `Bearer ${token}`);
+    const tokenInDb = await Token.findOne({ where: { token: token } });
+    expect(tokenInDb.lastUsedAt.getTime()).toBeGreaterThan(rightBeforeSendingReq.getTime());
+  });
 });
