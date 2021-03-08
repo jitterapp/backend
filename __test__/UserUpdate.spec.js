@@ -35,7 +35,7 @@ const putUser = async (id = 5, body = null, options = {}) => {
     agent.set('Authorization', `Bearer ${token}`);
   }
   if (options.token) {
-    agent.set('Authorization', `Bearer ${token}`);
+    agent.set('Authorization', `Bearer ${options.token}`);
   }
   return agent.send(body);
 };
