@@ -9,10 +9,10 @@ const UserNotFoundException = require('./UserNotFoundException');
 const { randomString } = require('../shared/generator');
 
 const save = async (body) => {
-  const { username, email, password } = body;
+  const { fullname, username, email, password, dob } = body;
   const saltRounds = 10;
   const hash = await bcrypt.hash(password, saltRounds);
-  const user = { username, email, password: hash, activationToken: randomString(16) };
+  const user = { fullname, username, email, dob, password: hash, activationToken: randomString(16) };
   const transaction = await sequelize.transaction();
   await User.create(user, { transaction });
   try {

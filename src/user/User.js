@@ -8,8 +8,14 @@ class User extends Model {}
 
 User.init(
   {
+    fullname: {
+      type: Sequelize.STRING,
+    },
     username: {
       type: Sequelize.STRING,
+    },
+    dob: {
+      type: Sequelize.DATE,
     },
     email: {
       type: Sequelize.STRING,

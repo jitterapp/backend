@@ -14,6 +14,13 @@ router.post(
     .bail()
     .isLength({ min: 4, max: 32 })
     .withMessage('Must have min 4 and max 32 characters'),
+  check('fullname')
+    .notEmpty()
+    .withMessage('Fullname cannot be null')
+    .bail()
+    .isLength({ min: 4, max: 32 })
+    .withMessage('Must have min 4 and max 32 characters'),
+  check('dob').isDate(),
   check('email')
     .notEmpty()
     .withMessage('Email cannot be null')
@@ -50,7 +57,7 @@ router.post(
   }
 );
 
-router.post('/api/1.0/users/token/:token', async (req, res, next) => {
+router.get('/api/1.0/users/token/:token', async (req, res, next) => {
   const token = req.params.token;
 
   try {
@@ -81,8 +88,7 @@ router.get('/api/1.0/users/:id', async (req, res, next) => {
 router.put('/api/1.0/users/:id', async (req, res, next) => {
   const authenticatedUser = req.authenticatedUser;
 
-  // eslint-disable-next-line eqeqeq
-  if (!authenticatedUser || authenticatedUser.id != req.params.id) {
+  if (!authenticatedUser || authenticatedUser.id !== req.params.id) {
     return next(new ForbiddenException('Not authorized to edit user'));
   }
   await UserService.updateUser(req.params.id, req.body);
@@ -91,8 +97,7 @@ router.put('/api/1.0/users/:id', async (req, res, next) => {
 
 router.delete('/api/1.0/users/:id', async (req, res, next) => {
   const authenticatedUser = req.authenticatedUser;
-  // eslint-disable-next-line eqeqeq
-  if (!authenticatedUser || authenticatedUser.id != req.params.id) {
+  if (!authenticatedUser || authenticatedUser.id !== req.params.id) {
     return next(new ForbiddenException('Not authorized to delete user'));
   }
   await UserService.deleteUser(req.params.id);
