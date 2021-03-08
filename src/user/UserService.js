@@ -53,8 +53,15 @@ const getUsers = async (page, size, authenticatedUser) => {
   };
 };
 
-const getUser = async (id) => {
-  const user = await User.findOne({ where: { id: id, inactive: false }, attributes: ['id', 'username', 'email'] });
+const getUser = async (id, includePassword = false) => {
+  const attributes = ['id', 'username', 'email', 'fullname', 'dob'];
+  if (includePassword) {
+    attributes.push('password');
+  }
+  const user = await User.findOne({
+    where: { id: id, inactive: false },
+    attributes,
+  });
   if (!user) {
     throw new UserNotFoundException();
   }
@@ -63,7 +70,9 @@ const getUser = async (id) => {
 
 const updateUser = async (id, updateBody) => {
   const user = await User.findOne({ where: { id: id } });
-  user.username = updateBody.username;
+  user.username = updateBody.username || user.username;
+  user.dob = updateBody.dob || user.dob;
+  user.fullname = updateBody.fullname || user.fullname;
   await user.save();
 };
 
@@ -71,4 +80,12 @@ const deleteUser = async (id) => {
   await User.destroy({ where: { id: id } });
 };
 
-module.exports = { save, findByEmail, activate, getUsers, getUser, updateUser, deleteUser };
+const updatePassword = async (id, password) => {
+  const user = await User.findOne({ where: { id: id } });
+  const saltRounds = 10;
+  const hash = await bcrypt.hash(password, saltRounds);
+  user.password = hash;
+  await user.save();
+};
+
+module.exports = { save, findByEmail, activate, getUsers, getUser, updateUser, deleteUser, updatePassword };
