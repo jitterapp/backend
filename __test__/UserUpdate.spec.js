@@ -40,6 +40,24 @@ const putUser = async (id = 5, body = null, options = {}) => {
   return agent.send(body);
 };
 
+const updatePassword = async (body = null, options = {}) => {
+  let agent = request(app);
+  let token;
+  if (options.auth) {
+    const response = await agent.post('/api/1.0/auth').send(options.auth);
+    token = response.body.token;
+  }
+
+  agent = request(app).put('/api/1.0/users/password');
+  if (token) {
+    agent.set('Authorization', `Bearer ${token}`);
+  }
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${token}`);
+  }
+  return agent.send(body);
+};
+
 describe('User update', () => {
   it('returns forbidden when request sent without basic authentication', async () => {
     const response = await putUser();
@@ -97,5 +115,93 @@ describe('User update', () => {
   it('returns 403 when token is not valid', async () => {
     const response = await putUser(5, null, { token: '123' });
     expect(response.status).toBe(403);
+  });
+  it('updates username and fullname in database when valid update request is sent from authorized user', async () => {
+    const savedUser = await addUser();
+    const validUpdate = { username: 'user1-updated', fullname: 'updated fullname' };
+    await putUser(savedUser.id, validUpdate, {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    const inDBUser = await User.findOne({ where: { id: savedUser.id } });
+    expect(inDBUser.username).toBe(validUpdate.username);
+    expect(inDBUser.fullname).toBe(validUpdate.fullname);
+  });
+  it('updates username, fullname, dob in database when valid update request is sent from authorized user', async () => {
+    const savedUser = await addUser();
+    const validUpdate = { username: 'user1-updated', fullname: 'updated fullname', dob: '1999-02-25' };
+    const response = await putUser(savedUser.id, validUpdate, {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    const inDBUser = await User.findOne({ where: { id: savedUser.id } });
+    expect(inDBUser.username).toBe(validUpdate.username);
+    expect(inDBUser.fullname).toBe(validUpdate.fullname);
+    expect(inDBUser.dob).toString(`${validUpdate.dob}T00:00:00.000Z`);
+    expect(response.status).toBe(200);
+  });
+  it('fails to update fullname', async () => {
+    const savedUser = await addUser();
+    const validUpdate = { fullname: 't' };
+    const response = await putUser(savedUser.id, validUpdate, {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    const body = response.body;
+    expect(body.validationErrors.fullname).toBe('Must have min 4 and max 32 characters');
+    expect(response.status).toBe(400);
+  });
+  it('fails to update dob', async () => {
+    const savedUser = await addUser();
+    const validUpdate = { dob: '1992-02-33' };
+    const response = await putUser(savedUser.id, validUpdate, {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    const body = response.body;
+    expect(body.validationErrors.dob).toBe('Invalid value');
+    expect(response.status).toBe(400);
+  });
+});
+describe('User update password', () => {
+  it('returns forbidden when request sent without authentication', async () => {
+    const response = await updatePassword();
+    expect(response.status).toBe(403);
+  });
+  it('fails to update password without new password', async () => {
+    const user = await addUser();
+    const response = await updatePassword(
+      { oldPassword: 'P4ssword' },
+      { auth: { email: user.email, password: 'P4ssword' } }
+    );
+    expect(response.status).toBe(400);
+    const body = response.body;
+    expect(body.validationErrors.newPassword).toBe('New Password cannot be null');
+  });
+  it('fails to update password without old password', async () => {
+    const user = await addUser();
+    const response = await updatePassword(
+      { newPassword: 'newPassword1' },
+      { auth: { email: user.email, password: 'P4ssword' } }
+    );
+    expect(response.status).toBe(400);
+    const body = response.body;
+    expect(body.validationErrors.oldPassword).toBe('Old Password cannot be null');
+  });
+  it('fails to update password with mismatching old password', async () => {
+    const user = await addUser();
+    const response = await updatePassword(
+      { oldPassword: 'P4ssword1', newPassword: 'newPassword1' },
+      { auth: { email: user.email, password: 'P4ssword' } }
+    );
+    expect(response.status).toBe(400);
+    const body = response.body;
+    expect(body.message).toBe('Old password is incorrect');
+  });
+  it('success to update password', async () => {
+    const user = await addUser();
+    const response = await updatePassword(
+      { oldPassword: 'P4ssword', newPassword: 'newPassword1' },
+      { auth: { email: user.email, password: 'P4ssword' } }
+    );
+    expect(response.status).toBe(200);
+    const body = response.body;
+    expect(body.message).toBe('Password updated');
   });
 });

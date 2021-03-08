@@ -11,7 +11,6 @@ const tokenAuthentication = async (req, res, next) => {
         return next(new ForbiddenException('Not authorized'));
       }
       req.authenticatedUser = user;
-      // eslint-disable-next-line no-empty
     } catch (error) {
       return next(new ForbiddenException('Not authorized'));
     }
