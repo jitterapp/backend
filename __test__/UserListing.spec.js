@@ -9,7 +9,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await User.destroy({ truncate: true }); //clean user table before each test
+  await User.destroy({ truncate: { cascade: true } }); //clean user table before each test
 });
 
 const auth = async (options = {}) => {

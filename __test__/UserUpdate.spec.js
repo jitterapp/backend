@@ -11,7 +11,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await User.destroy({ truncate: true }); //clean user table before each test
+  await User.destroy({ truncate: { cascade: true } }); //clean user table before each test
 });
 
 const activeUser = { username: 'user1', email: 'user1@mail.com', password: 'P4ssword', inactive: false };
@@ -35,7 +35,7 @@ const putUser = async (id = 5, body = null, options = {}) => {
     agent.set('Authorization', `Bearer ${token}`);
   }
   if (options.token) {
-    agent.set('Authorization', `Bearer ${token}`);
+    agent.set('Authorization', `Bearer ${options.token}`);
   }
   return agent.send(body);
 };

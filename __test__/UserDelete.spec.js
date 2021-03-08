@@ -3,13 +3,14 @@ const app = require('../src/app');
 const User = require('../src/user/User');
 const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
+const Token = require('../src/auth/Token');
 
 beforeAll(async () => {
   await sequelize.sync();
 });
 
 beforeEach(async () => {
-  await User.destroy({ truncate: true }); //clean user table before each test
+  await User.destroy({ truncate: { cascade: true } }); //clean user table before each test
 });
 
 const activeUser = { username: 'user1', email: 'user1@mail.com', password: 'P4ssword', inactive: false };
@@ -77,5 +78,24 @@ describe('User delete', () => {
 
     const inDBUser = await User.findOne({ where: { id: savedUser.id } });
     expect(inDBUser).toBeNull();
+  });
+  it('deletes token from database when delete user request comes from authorized user', async () => {
+    const savedUser = await addUser();
+    const token = await auth({ auth: { email: 'user1@mail.com', password: 'P4ssword' } });
+    await deleteUser(savedUser.id, { token: token });
+
+    const tokenInDb = await Token.findOne({ where: { token: token } });
+
+    expect(tokenInDb).toBeNull();
+  });
+  it('deletes all tokens from database when delete user request comes from authorized user', async () => {
+    const savedUser = await addUser();
+    const token1 = await auth({ auth: { email: 'user1@mail.com', password: 'P4ssword' } }); //token that will be deleted to cancel user session
+    const token2 = await auth({ auth: { email: 'user1@mail.com', password: 'P4ssword' } }); // token that will be sent to authorize deleting user session
+    await deleteUser(savedUser.id, { token: token1 });
+
+    const tokenInDb = await Token.findOne({ where: { token: token2 } });
+
+    expect(tokenInDb).toBeNull();
   });
 });

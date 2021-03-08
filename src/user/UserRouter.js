@@ -86,7 +86,7 @@ router.get('/api/1.0/users/me', tokenAuthentication, async (req, res, next) => {
   }
 });
 
-router.get('/api/1.0/users/:id', async (req, res, next) => {
+router.get('/api/1.0/users/:id', tokenAuthOrNot, async (req, res, next) => {
   try {
     const user = await UserService.getUser(req.params.id);
     res.send(user);
