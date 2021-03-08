@@ -37,6 +37,23 @@ User.init(
     modelName: 'user',
   }
 );
+User.belongsToMany(User, {
+  as: 'Friends',
+  through: 'friends',
+  otherKey: 'friendId',
+});
+User.belongsToMany(User, {
+  as: 'Requestees',
+  through: 'friendRequests',
+  foreignKey: 'requesterId',
+  onDelete: 'CASCADE',
+});
+User.belongsToMany(User, {
+  as: 'Requesters',
+  through: 'friendRequests',
+  foreignKey: 'requesteeId',
+  onDelete: 'CASCADE',
+});
 
 User.hasMany(Token, { onDelete: 'cascade', foreignKey: 'userId' });
 

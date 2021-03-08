@@ -160,7 +160,7 @@ describe('Get user', () => {
     });
 
     const response = await getUser(user.id);
-    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email']);
+    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob']);
   });
   it('returns 404 when user is inactive', async () => {
     const user = await User.create({
@@ -172,5 +172,38 @@ describe('Get user', () => {
 
     const response = await getUser(user.id);
     expect(response.status).toBe(404);
+  });
+});
+
+describe('Get me', () => {
+  const getUser = async (options) => {
+    let agent = request(app);
+    let token;
+    if (options.auth) {
+      const response = await agent.post('/api/1.0/auth').send(options.auth);
+      token = response.body.token;
+    }
+
+    agent = request(app).get('/api/1.0/users/me');
+    if (token) {
+      agent.set('Authorization', `Bearer ${token}`);
+    }
+    return agent.send();
+  };
+  it('returns id, username, fullname, email and dob in response body', async () => {
+    const hash = await bcrypt.hash('P4ssword', 10);
+    const user = await User.create({
+      username: 'user1',
+      email: 'user1@Mail.com',
+      fullname: 'full name',
+      password: hash,
+      inactive: false,
+      dob: '1999-02-23',
+    });
+
+    const response = await getUser({
+      auth: { email: user.email, password: 'P4ssword' },
+    });
+    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob']);
   });
 });
