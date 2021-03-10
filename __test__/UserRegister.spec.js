@@ -47,6 +47,8 @@ const validUser = {
   password: 'P4ssword',
   dob: '1999-12-22',
   fullname: 'full name',
+  phonenumber: '615-274-8283',
+  gender: 1,
 };
 
 const postUser = (user = validUser) => {
@@ -78,6 +80,8 @@ describe('User Registration', () => {
     expect(savedUser.email).toBe('user1@mail.com');
     expect(savedUser.fullname).toBe('full name');
     expect(savedUser.dob).toString('1999-12-22T00:00:00.000Z');
+    expect(savedUser.gender).toBe(1);
+    expect(savedUser.phonenumber).toBe('615-274-8283');
   });
 
   it('hashes the pasword in database', async () => {
@@ -146,9 +150,11 @@ describe('User Registration', () => {
       password: 'P4ssword',
       dob: null,
       fullname: 'full name',
+      gender: 1,
+      phonenumber: '615-274-8283',
     });
     const body = response.body;
-    expect(body.validationErrors.dob).toBe('Invalid value');
+    expect(body.validationErrors.dob).toBe('Date of birth can not be null');
   });
   it('returns dob Invalid value when dob is invalid format', async () => {
     const response = await postUser({
@@ -168,6 +174,8 @@ describe('User Registration', () => {
       password: 'P4ssword',
       fullname: null,
       dob: '1999-12-22',
+      phonenumber: '615-274-8283',
+      gender: 1,
     });
 
     /*
@@ -229,10 +237,56 @@ describe('User Registration', () => {
       password: 'P4ssword',
       fullname: 'full name',
       dob: '1999-12-22',
+      phonenumber: '615-274-8284',
+      gender: 1,
     };
     const response = await postUser(user);
     const body = response.body;
     expect(Object.keys(body.validationErrors)).toEqual(['username', 'email']);
+  });
+  it('returns errors for invalid phone number', async () => {
+    await User.create({ ...validUser });
+    const user = {
+      username: 'user name',
+      email: 'test@test.com',
+      password: 'P4ssword',
+      fullname: 'full name',
+      dob: '1999-12-22',
+      phonenumber: '615-274-8284123',
+      gender: 1,
+    };
+    const response = await postUser(user);
+    const body = response.body;
+    expect(Object.keys(body.validationErrors)).toEqual(['phonenumber']);
+  });
+  it('returns errors for phone number required', async () => {
+    await User.create({ ...validUser });
+    const user = {
+      username: 'user name',
+      email: 'test@test.com',
+      password: 'P4ssword',
+      fullname: 'full name',
+      dob: '1999-12-22',
+      gender: 1,
+    };
+    const response = await postUser(user);
+    const body = response.body;
+    expect(Object.keys(body.validationErrors)).toEqual(['phonenumber']);
+  });
+  it('returns errors for phone number is in use', async () => {
+    await User.create({ ...validUser });
+    const user = {
+      username: 'user name',
+      email: 'test@test.com',
+      password: 'P4ssword',
+      fullname: 'full name',
+      dob: '1999-12-22',
+      phonenumber: '615-274-8283',
+      gender: 1,
+    };
+    const response = await postUser(user);
+    const body = response.body;
+    expect(Object.keys(body.validationErrors)).toEqual(['phonenumber']);
   });
   it('creates a user in inactive mode', async () => {
     await postUser();

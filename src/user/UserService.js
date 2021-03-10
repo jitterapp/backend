@@ -10,10 +10,19 @@ const { randomString } = require('../shared/generator');
 // const Friend = require('../friend/Friend');
 
 const save = async (body) => {
-  const { fullname, username, email, password, dob } = body;
+  const { fullname, username, email, password, dob, phonenumber, gender } = body;
   const saltRounds = 10;
   const hash = await bcrypt.hash(password, saltRounds);
-  const user = { fullname, username, email, dob, password: hash, activationToken: randomString(16) };
+  const user = {
+    fullname,
+    username,
+    email,
+    dob,
+    phonenumber,
+    gender,
+    password: hash,
+    activationToken: randomString(16),
+  };
   const transaction = await sequelize.transaction();
   await User.create(user, { transaction });
   try {
@@ -27,6 +36,10 @@ const save = async (body) => {
 
 const findByEmail = async (email) => {
   return await User.findOne({ where: { email: email } });
+};
+
+const findByPhonenumber = async (phonenumber) => {
+  return await User.findOne({ where: { phonenumber: phonenumber } });
 };
 
 const activate = async (token) => {
@@ -48,6 +61,8 @@ const getUsers = async (page, size, authenticatedUser) => {
       'fullname',
       'email',
       'dob',
+      'phonenumber',
+      'gender',
       'isFriend',
       'isFriendRequestSent',
       'isFriendRequestReceived',
@@ -93,7 +108,7 @@ const getUsers = async (page, size, authenticatedUser) => {
 };
 
 const getUser = async (id, includePassword = false) => {
-  const attributes = ['id', 'username', 'email', 'fullname', 'dob'];
+  const attributes = ['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender'];
   if (includePassword) {
     attributes.push('password');
   }
@@ -112,6 +127,8 @@ const updateUser = async (id, updateBody) => {
   user.username = updateBody.username || user.username;
   user.dob = updateBody.dob || user.dob;
   user.fullname = updateBody.fullname || user.fullname;
+  user.phonenumber = updateBody.phonenumber || user.phonenumber;
+  user.gender = updateBody.gender || user.gender;
   await user.save();
 };
 
@@ -127,4 +144,14 @@ const updatePassword = async (id, password) => {
   await user.save();
 };
 
-module.exports = { save, findByEmail, activate, getUsers, getUser, updateUser, deleteUser, updatePassword };
+module.exports = {
+  save,
+  findByEmail,
+  findByPhonenumber,
+  activate,
+  getUsers,
+  getUser,
+  updateUser,
+  deleteUser,
+  updatePassword,
+};

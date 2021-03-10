@@ -79,6 +79,8 @@ describe('Listing users', () => {
       'fullname',
       'email',
       'dob',
+      'phonenumber',
+      'gender',
       'Friends',
       'Requestees',
       'Requesters',
@@ -172,7 +174,7 @@ describe('Get user', () => {
     });
 
     const response = await getUser(user.id);
-    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob']);
+    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender']);
   });
   it('returns 404 when user is inactive', async () => {
     const user = await User.create({
@@ -216,6 +218,6 @@ describe('Get me', () => {
     const response = await getUser({
       auth: { email: user.email, password: 'P4ssword' },
     });
-    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob']);
+    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender']);
   });
 });

@@ -17,6 +17,14 @@ User.init(
     dob: {
       type: Sequelize.DATE,
     },
+    phonenumber: {
+      type: Sequelize.STRING,
+      unique: true,
+    },
+    gender: {
+      type: Sequelize.TINYINT,
+      defaultValue: 3,
+    },
     email: {
       type: Sequelize.STRING,
       unique: true,

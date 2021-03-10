@@ -23,7 +23,20 @@ router.post(
     .bail()
     .isLength({ min: 4, max: 32 })
     .withMessage('Must have min 4 and max 32 characters'),
-  check('dob').isDate(),
+  check('dob').notEmpty().withMessage('Date of birth can not be null').bail().isDate(),
+  check('gender').notEmpty().withMessage('Gender is required').bail().isInt(),
+  check('phonenumber')
+    .notEmpty()
+    .withMessage('Phonenumber is required')
+    .bail()
+    .matches(/^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$/)
+    .withMessage('Phone number is invalid')
+    .custom(async (phonenumber) => {
+      const user = await UserService.findByPhonenumber(phonenumber);
+      if (user) {
+        throw new Error('phonenumber is already in use');
+      }
+    }),
   check('email')
     .notEmpty()
     .withMessage('Email cannot be null')
@@ -145,6 +158,14 @@ router.put(
     .isLength({ min: 4, max: 32 })
     .withMessage('Must have min 4 and max 32 characters'),
   check('dob').if(body('dob').exists()).isDate(),
+  check('gender').if(body('gender').exists()).notEmpty().withMessage('Gender is required').bail().isInt(),
+  check('phonenumber')
+    .if(body('phonenumber').exists())
+    .notEmpty()
+    .withMessage('Phonenumber is required')
+    .bail()
+    .matches(/^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$/)
+    .withMessage('Phone number is invalid'),
   tokenAuthentication,
   validateRequest,
   async (req, res, next) => {
@@ -152,6 +173,12 @@ router.put(
 
     if (authenticatedUser.id !== req.params.id) {
       return next(new ForbiddenException('Not authorized to edit user'));
+    }
+    if (req.body.phonenumber) {
+      const user = await UserService.findByPhonenumber(req.body.phonenumber);
+      if (user.id !== authenticatedUser.id) {
+        throw new Error('phonenumber is already in use');
+      }
     }
     await UserService.updateUser(req.params.id, req.body);
     return res.send({ message: 'updated' });
