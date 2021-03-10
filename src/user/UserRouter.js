@@ -129,6 +129,7 @@ router.put(
 
 router.put(
   '/api/1.0/users/:id',
+  check('id').isInt().withMessage('id should be integer').bail().toInt(),
   check('username')
     .if(body('username').exists())
     .notEmpty()
@@ -149,7 +150,7 @@ router.put(
   async (req, res, next) => {
     const authenticatedUser = req.authenticatedUser;
 
-    if (authenticatedUser.id !== Number(req.params.id)) {
+    if (authenticatedUser.id !== req.params.id) {
       return next(new ForbiddenException('Not authorized to edit user'));
     }
     await UserService.updateUser(req.params.id, req.body);
@@ -157,13 +158,19 @@ router.put(
   }
 );
 
-router.delete('/api/1.0/users/:id', tokenAuthentication, async (req, res, next) => {
-  const authenticatedUser = req.authenticatedUser;
-  if (authenticatedUser.id !== Number(req.params.id)) {
-    return next(new ForbiddenException('Not authorized to delete user'));
+router.delete(
+  '/api/1.0/users/:id',
+  check('id').isInt().withMessage('id should be integer').bail().toInt(),
+  validateRequest,
+  tokenAuthentication,
+  async (req, res, next) => {
+    const authenticatedUser = req.authenticatedUser;
+    if (authenticatedUser.id !== req.params.id) {
+      return next(new ForbiddenException('Not authorized to delete user'));
+    }
+    await UserService.deleteUser(req.params.id);
+    return res.send();
   }
-  await UserService.deleteUser(req.params.id);
-  return res.send();
-});
+);
 
 module.exports = router;
