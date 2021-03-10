@@ -259,20 +259,6 @@ describe('User Registration', () => {
     const body = response.body;
     expect(Object.keys(body.validationErrors)).toEqual(['phonenumber']);
   });
-  it('returns errors for phone number required', async () => {
-    await User.create({ ...validUser });
-    const user = {
-      username: 'user name',
-      email: 'test@test.com',
-      password: 'P4ssword',
-      fullname: 'full name',
-      dob: '1999-12-22',
-      gender: 1,
-    };
-    const response = await postUser(user);
-    const body = response.body;
-    expect(Object.keys(body.validationErrors)).toEqual(['phonenumber']);
-  });
   it('returns errors for phone number is in use', async () => {
     await User.create({ ...validUser });
     const user = {

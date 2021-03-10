@@ -24,8 +24,9 @@ router.post(
     .isLength({ min: 4, max: 32 })
     .withMessage('Must have min 4 and max 32 characters'),
   check('dob').notEmpty().withMessage('Date of birth can not be null').bail().isDate(),
-  check('gender').notEmpty().withMessage('Gender is required').bail().isInt(),
+  check('gender').if(body('gender').exists()).notEmpty().withMessage('Gender is required').bail().isInt(),
   check('phonenumber')
+    .if(body('phonenumber').exists())
     .notEmpty()
     .withMessage('Phonenumber is required')
     .bail()
