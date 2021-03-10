@@ -31,6 +31,24 @@ User.init(
     activationToken: {
       type: Sequelize.STRING,
     },
+    isFriend: {
+      type: Sequelize.VIRTUAL,
+      get() {
+        return !!(this.Friends && this.Friends.length);
+      },
+    },
+    isFriendRequestSent: {
+      type: Sequelize.VIRTUAL,
+      get() {
+        return !!(this.Requesters && this.Requesters.length);
+      },
+    },
+    isFriendRequestReceived: {
+      type: Sequelize.VIRTUAL,
+      get() {
+        return !!(this.Requestees && this.Requestees.length);
+      },
+    },
   },
   {
     sequelize,

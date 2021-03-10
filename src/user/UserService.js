@@ -7,6 +7,7 @@ const EmailException = require('../email/EmailException');
 const InvalidTokenException = require('./InvalidTokenException');
 const UserNotFoundException = require('./UserNotFoundException');
 const { randomString } = require('../shared/generator');
+// const Friend = require('../friend/Friend');
 
 const save = async (body) => {
   const { fullname, username, email, password, dob } = body;
@@ -41,7 +42,45 @@ const activate = async (token) => {
 const getUsers = async (page, size, authenticatedUser) => {
   const usersWithCount = await User.findAndCountAll({
     where: { inactive: false, id: { [Sequelize.Op.not]: authenticatedUser ? authenticatedUser.id : 0 } },
-    attributes: ['id', 'username', 'fullname', 'email', 'dob'],
+    attributes: [
+      'id',
+      'username',
+      'fullname',
+      'email',
+      'dob',
+      'isFriend',
+      'isFriendRequestSent',
+      'isFriendRequestReceived',
+    ],
+    include: [
+      {
+        model: User,
+        as: 'Friends',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+      {
+        model: User,
+        as: 'Requestees',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+      {
+        model: User,
+        as: 'Requesters',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+    ],
     limit: size,
     offset: size * page,
   });

@@ -70,7 +70,19 @@ describe('Listing users', () => {
     await addUsers(6, 5);
     const response = await getUsers();
     const user = response.body.content[0];
-    expect(Object.keys(user)).toEqual(['id', 'username', 'fullname', 'email', 'dob']);
+    expect(Object.keys(user)).toEqual([
+      'isFriend',
+      'isFriendRequestSent',
+      'isFriendRequestReceived',
+      'id',
+      'username',
+      'fullname',
+      'email',
+      'dob',
+      'Friends',
+      'Requestees',
+      'Requesters',
+    ]);
   });
   it('returns 2 as total pages when there are 15 active and 7 inactive users', async () => {
     await addUsers(15, 7);
