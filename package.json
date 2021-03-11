@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/jitterapp/backend#readme",
   "dependencies": {
+    "awesome-phonenumber": "^2.47.0",
     "bcrypt": "^5.0.0",
     "config": "^3.3.3",
     "cross-env": "^7.0.3",
@@ -63,7 +64,9 @@
       "prettier/prettier": "warn"
     }
   },
-  "pre-commit": [ "lint" ],
+  "pre-commit": [
+    "lint"
+  ],
   "prettier": {
     "singleQuote": true,
     "printWidth": 120,

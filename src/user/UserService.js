@@ -3,16 +3,26 @@ const bcrypt = require('bcrypt');
 const EmailService = require('../email/EmailService');
 const sequelize = require('../config/database');
 const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const EmailException = require('../email/EmailException');
 const InvalidTokenException = require('./InvalidTokenException');
 const UserNotFoundException = require('./UserNotFoundException');
 const { randomString } = require('../shared/generator');
 
 const save = async (body) => {
-  const { fullname, username, email, password, dob } = body;
+  const { fullname, username, email, password, dob, phonenumber, gender } = body;
   const saltRounds = 10;
   const hash = await bcrypt.hash(password, saltRounds);
-  const user = { fullname, username, email, dob, password: hash, activationToken: randomString(16) };
+  const user = {
+    fullname,
+    username,
+    email,
+    dob,
+    phonenumber,
+    gender,
+    password: hash,
+    activationToken: randomString(16),
+  };
   const transaction = await sequelize.transaction();
   await User.create(user, { transaction });
   try {
@@ -28,6 +38,61 @@ const findByEmail = async (email) => {
   return await User.findOne({ where: { email: email } });
 };
 
+const findByPhonenumber = async (phonenumber) => {
+  return await User.findOne({ where: { phonenumber: phonenumber } });
+};
+
+const findByPhoneNumbers = async (authenticatedUser, phonenumbers) => {
+  return await User.findAll({
+    where: {
+      phonenumber: { [Op.in]: phonenumbers },
+      id: { [Op.not]: authenticatedUser ? authenticatedUser.id : 0 },
+      inactive: false,
+    },
+    attributes: [
+      'id',
+      'username',
+      'fullname',
+      'email',
+      'dob',
+      'phonenumber',
+      'gender',
+      'isFriend',
+      'isFriendRequestSent',
+      'isFriendRequestReceived',
+    ],
+    include: [
+      {
+        model: User,
+        as: 'Friends',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+      {
+        model: User,
+        as: 'Requestees',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+      {
+        model: User,
+        as: 'Requesters',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+    ],
+  });
+};
+
 const activate = async (token) => {
   const user = await User.findOne({ where: { activationToken: token } });
   if (!user) {
@@ -38,10 +103,72 @@ const activate = async (token) => {
   await user.save();
 };
 
-const getUsers = async (page, size, authenticatedUser) => {
+const getUsers = async (page, size, authenticatedUser, search = '') => {
   const usersWithCount = await User.findAndCountAll({
-    where: { inactive: false, id: { [Sequelize.Op.not]: authenticatedUser ? authenticatedUser.id : 0 } },
-    attributes: ['id', 'username', 'email'],
+    where: {
+      inactive: false,
+      id: {
+        [Op.not]: authenticatedUser ? authenticatedUser.id : 0,
+      },
+      [Op.or]: [
+        {
+          username: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+        {
+          fullname: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+        {
+          email: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+      ],
+    },
+    attributes: [
+      'id',
+      'username',
+      'fullname',
+      'email',
+      'dob',
+      'phonenumber',
+      'gender',
+      'isFriend',
+      'isFriendRequestSent',
+      'isFriendRequestReceived',
+    ],
+    include: [
+      {
+        model: User,
+        as: 'Friends',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+      {
+        model: User,
+        as: 'Requestees',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+      {
+        model: User,
+        as: 'Requesters',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+    ],
     limit: size,
     offset: size * page,
   });
@@ -54,7 +181,7 @@ const getUsers = async (page, size, authenticatedUser) => {
 };
 
 const getUser = async (id, includePassword = false) => {
-  const attributes = ['id', 'username', 'email', 'fullname', 'dob'];
+  const attributes = ['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender'];
   if (includePassword) {
     attributes.push('password');
   }
@@ -73,6 +200,8 @@ const updateUser = async (id, updateBody) => {
   user.username = updateBody.username || user.username;
   user.dob = updateBody.dob || user.dob;
   user.fullname = updateBody.fullname || user.fullname;
+  user.phonenumber = updateBody.phonenumber || user.phonenumber;
+  user.gender = updateBody.gender || user.gender;
   await user.save();
 };
 
@@ -88,4 +217,15 @@ const updatePassword = async (id, password) => {
   await user.save();
 };
 
-module.exports = { save, findByEmail, activate, getUsers, getUser, updateUser, deleteUser, updatePassword };
+module.exports = {
+  save,
+  findByEmail,
+  findByPhonenumber,
+  findByPhoneNumbers,
+  activate,
+  getUsers,
+  getUser,
+  updateUser,
+  deleteUser,
+  updatePassword,
+};

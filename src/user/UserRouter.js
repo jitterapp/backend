@@ -2,6 +2,7 @@ const express = require('express');
 const UserService = require('./UserService');
 const router = express.Router();
 const bcrypt = require('bcrypt');
+const PhoneNumberHelper = require('awesome-phonenumber');
 const { check, body } = require('express-validator');
 const pagination = require('../middleware/pagination');
 const validateRequest = require('../middleware/validateRequest');
@@ -23,7 +24,32 @@ router.post(
     .bail()
     .isLength({ min: 4, max: 32 })
     .withMessage('Must have min 4 and max 32 characters'),
-  check('dob').isDate(),
+  check('dob').notEmpty().withMessage('Date of birth can not be null').bail().isDate(),
+  check('gender').if(body('gender').exists()).notEmpty().withMessage('Gender is required').bail().isInt(),
+  check('phonenumber')
+    .if(body('phonenumber').exists())
+    .notEmpty()
+    .withMessage('Phonenumber is required')
+    .bail()
+    .custom(async (phonenumber) => {
+      try {
+        const pn = new PhoneNumberHelper(phonenumber, 'US');
+        if (!pn.isValid() || !pn.isPossible()) {
+          throw new Error('phonenumber is invalid');
+        }
+        const user = await UserService.findByPhonenumber(pn.getNumber('significant'));
+        if (user) {
+          throw new Error('phonenumber is already in use');
+        }
+      } catch (err) {
+        throw new Error('phonenumber is invalid');
+      }
+    })
+    .customSanitizer((phonenumber) => {
+      const pn = new PhoneNumberHelper(phonenumber, 'US');
+      return pn.getNumber('significant');
+    })
+    .bail(),
   check('email')
     .notEmpty()
     .withMessage('Email cannot be null')
@@ -71,10 +97,47 @@ router.get('/api/1.0/users/token/:token', async (req, res, next) => {
 router.get('/api/1.0/users', pagination, tokenAuthOrNot, async (req, res) => {
   const authenticatedUser = req.authenticatedUser;
   const { page, size } = req.pagination;
+  const search = req.query.search;
 
-  const users = await UserService.getUsers(page, size, authenticatedUser);
+  const users = await UserService.getUsers(page, size, authenticatedUser, search);
   res.send(users);
 });
+
+router.post(
+  '/api/1.0/users/findByPhonenumbers',
+  check('phonenumbers')
+    .notEmpty()
+    .withMessage('phonenumbers are required')
+    .bail()
+    .custom((phonenumbers) => {
+      if (!Array.isArray(phonenumbers)) {
+        throw new Error('phonenumbers should be array');
+      }
+      if (!phonenumbers.length) {
+        throw new Error('At least 1 phonenumber is required');
+      }
+      return true;
+    })
+    .customSanitizer((phonenumbers) => {
+      return phonenumbers.map((phonenumber) => {
+        const pn = new PhoneNumberHelper(phonenumber, 'US');
+        return pn.getNumber('significant');
+      });
+    })
+    .bail(),
+  tokenAuthOrNot,
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const authenticatedUser = req.authenticatedUser;
+      const phonenumbers = req.body.phonenumbers;
+      const users = await UserService.findByPhoneNumbers(authenticatedUser, phonenumbers);
+      res.send(users);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 router.get('/api/1.0/users/me', tokenAuthentication, async (req, res, next) => {
   try {
@@ -129,6 +192,7 @@ router.put(
 
 router.put(
   '/api/1.0/users/:id',
+  check('id').isInt().withMessage('id should be integer').bail().toInt(),
   check('username')
     .if(body('username').exists())
     .notEmpty()
@@ -144,26 +208,62 @@ router.put(
     .isLength({ min: 4, max: 32 })
     .withMessage('Must have min 4 and max 32 characters'),
   check('dob').if(body('dob').exists()).isDate(),
+  check('gender').if(body('gender').exists()).notEmpty().withMessage('Gender is required').bail().isInt(),
+  check('phonenumber')
+    .if(body('phonenumber').exists())
+    .notEmpty()
+    .withMessage('Phonenumber is required')
+    .bail()
+    .custom(async (phonenumber) => {
+      try {
+        const pn = new PhoneNumberHelper(phonenumber, 'US');
+        if (!pn.isValid() || !pn.isPossible()) {
+          throw new Error('phonenumber is invalid');
+        }
+        const user = await UserService.findByPhonenumber(pn.getNumber('significant'));
+        if (user) {
+          throw new Error('phonenumber is already in use');
+        }
+      } catch (err) {
+        throw new Error('phonenumber is invalid');
+      }
+    })
+    .customSanitizer((phonenumber) => {
+      const pn = new PhoneNumberHelper(phonenumber, 'US');
+      return pn.getNumber('significant');
+    }),
   tokenAuthentication,
   validateRequest,
   async (req, res, next) => {
     const authenticatedUser = req.authenticatedUser;
 
-    if (authenticatedUser.id !== Number(req.params.id)) {
+    if (authenticatedUser.id !== req.params.id) {
       return next(new ForbiddenException('Not authorized to edit user'));
+    }
+    if (req.body.phonenumber) {
+      const user = await UserService.findByPhonenumber(req.body.phonenumber);
+      if (user.id !== authenticatedUser.id) {
+        throw new Error('phonenumber is already in use');
+      }
     }
     await UserService.updateUser(req.params.id, req.body);
     return res.send({ message: 'updated' });
   }
 );
 
-router.delete('/api/1.0/users/:id', tokenAuthentication, async (req, res, next) => {
-  const authenticatedUser = req.authenticatedUser;
-  if (authenticatedUser.id !== Number(req.params.id)) {
-    return next(new ForbiddenException('Not authorized to delete user'));
+router.delete(
+  '/api/1.0/users/:id',
+  check('id').isInt().withMessage('id should be integer').bail().toInt(),
+  validateRequest,
+  tokenAuthentication,
+  async (req, res, next) => {
+    const authenticatedUser = req.authenticatedUser;
+    if (authenticatedUser.id !== req.params.id) {
+      return next(new ForbiddenException('Not authorized to delete user'));
+    }
+    await UserService.deleteUser(req.params.id);
+    return res.send();
   }
-  await UserService.deleteUser(req.params.id);
-  return res.send();
-});
+);
 
 module.exports = router;

@@ -150,12 +150,22 @@ describe('User update', () => {
   });
   it('fails to update dob', async () => {
     const savedUser = await addUser();
-    const validUpdate = { dob: '1992-02-33' };
-    const response = await putUser(savedUser.id, validUpdate, {
+    const invalidUpdate = { dob: '1992-02-33' };
+    const response = await putUser(savedUser.id, invalidUpdate, {
       auth: { email: savedUser.email, password: 'P4ssword' },
     });
     const body = response.body;
     expect(body.validationErrors.dob).toBe('Invalid value');
+    expect(response.status).toBe(400);
+  });
+  it('fails to update phonenumber', async () => {
+    const savedUser = await addUser();
+    const invalidUpdate = { phonenumber: '615-274-55555' };
+    const response = await putUser(savedUser.id, invalidUpdate, {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    const body = response.body;
+    expect(body.validationErrors.phonenumber).toBe('phonenumber is invalid');
     expect(response.status).toBe(400);
   });
 });

@@ -30,6 +30,14 @@ const getUsers = (options = {}) => {
   return agent;
 };
 
+const getUsersByPhoneNumbers = (phonenumbers = [], options = {}) => {
+  const agent = request(app).post('/api/1.0/users/findByPhonenumbers');
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.send({ phonenumbers });
+};
+
 const addUsers = async (activeUserCount, inactiveUserCount = 0) => {
   const hash = await bcrypt.hash('P4ssword', 10);
   for (let i = 0; i < activeUserCount + inactiveUserCount; i++) {
@@ -38,6 +46,7 @@ const addUsers = async (activeUserCount, inactiveUserCount = 0) => {
       email: `user${i + 1}@mail.com`,
       inactive: i >= activeUserCount,
       password: hash,
+      phonenumber: `615274828${i}`,
     });
   }
 };
@@ -66,11 +75,25 @@ describe('Listing users', () => {
     const response = await getUsers();
     expect(response.body.content.length).toBe(6);
   });
-  it('returns only id, username, and email in content array for each user', async () => {
+  it('returns only id, username, fullname, email and dob in content array for each user', async () => {
     await addUsers(6, 5);
     const response = await getUsers();
     const user = response.body.content[0];
-    expect(Object.keys(user)).toEqual(['id', 'username', 'email']);
+    expect(Object.keys(user)).toEqual([
+      'isFriend',
+      'isFriendRequestSent',
+      'isFriendRequestReceived',
+      'id',
+      'username',
+      'fullname',
+      'email',
+      'dob',
+      'phonenumber',
+      'gender',
+      'Friends',
+      'Requestees',
+      'Requesters',
+    ]);
   });
   it('returns 2 as total pages when there are 15 active and 7 inactive users', async () => {
     await addUsers(15, 7);
@@ -113,13 +136,31 @@ describe('Listing users', () => {
     expect(response.body.page).toBe(0);
     expect(response.body.size).toBe(10);
   });
-
   it('returns user page with users except the user who is logged when request has valid authorization ', async () => {
     await addUsers(11);
     const token = await auth({ auth: { email: 'user1@mail.com', password: 'P4ssword' } });
     const response = await getUsers({ token: token });
     // we are showing one page becuase its 10 users per page and we are not showing the logged in user.
     expect(response.body.totalPages).toBe(1);
+  });
+  it('fails to get users by phonenumbers', async () => {
+    await addUsers(15);
+    const phonenumbers = [];
+    for (let i = 0; i < 10; i++) {
+      phonenumbers.push(`615-274-828${i}`);
+    }
+    const response = await getUsersByPhoneNumbers();
+    expect(response.status).toBe(400);
+  });
+  it('returns 10 users by phonenumbers', async () => {
+    await addUsers(15);
+    const phonenumbers = [];
+    for (let i = 0; i < 10; i++) {
+      phonenumbers.push(`615-274-828${i}`);
+    }
+    const response = await getUsersByPhoneNumbers(phonenumbers);
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(10);
   });
 });
 
@@ -160,7 +201,7 @@ describe('Get user', () => {
     });
 
     const response = await getUser(user.id);
-    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob']);
+    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender']);
   });
   it('returns 404 when user is inactive', async () => {
     const user = await User.create({
@@ -204,6 +245,6 @@ describe('Get me', () => {
     const response = await getUser({
       auth: { email: user.email, password: 'P4ssword' },
     });
-    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob']);
+    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender']);
   });
 });
