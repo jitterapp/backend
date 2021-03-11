@@ -90,6 +90,34 @@ router.get('/api/1.0/users', pagination, tokenAuthOrNot, async (req, res) => {
   res.send(users);
 });
 
+router.post(
+  '/api/1.0/users/findByPhonenumbers',
+  check('phonenumbers')
+    .notEmpty()
+    .withMessage('phonenumbers are required')
+    .bail()
+    .custom(async (phonenumbers) => {
+      if (!Array.isArray(phonenumbers)) {
+        throw new Error('phonenumbers should be array');
+      }
+      if (!phonenumbers.length) {
+        throw new Error('At leas 1 phonenumber is required');
+      }
+    }),
+  tokenAuthOrNot,
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const authenticatedUser = req.authenticatedUser;
+      const phonenumbers = req.body.phonenumbers;
+      const users = await UserService.findByPhoneNumbers(authenticatedUser, phonenumbers);
+      res.send(users);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 router.get('/api/1.0/users/me', tokenAuthentication, async (req, res, next) => {
   try {
     const authenticatedUser = req.authenticatedUser;

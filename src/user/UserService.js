@@ -3,11 +3,11 @@ const bcrypt = require('bcrypt');
 const EmailService = require('../email/EmailService');
 const sequelize = require('../config/database');
 const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const EmailException = require('../email/EmailException');
 const InvalidTokenException = require('./InvalidTokenException');
 const UserNotFoundException = require('./UserNotFoundException');
 const { randomString } = require('../shared/generator');
-// const Friend = require('../friend/Friend');
 
 const save = async (body) => {
   const { fullname, username, email, password, dob, phonenumber, gender } = body;
@@ -42,6 +42,57 @@ const findByPhonenumber = async (phonenumber) => {
   return await User.findOne({ where: { phonenumber: phonenumber } });
 };
 
+const findByPhoneNumbers = async (authenticatedUser, phonenumbers) => {
+  return await User.findAll({
+    where: {
+      phonenumber: { [Op.in]: phonenumbers },
+      id: { [Op.not]: authenticatedUser ? authenticatedUser.id : 0 },
+      inactive: false,
+    },
+    attributes: [
+      'id',
+      'username',
+      'fullname',
+      'email',
+      'dob',
+      'phonenumber',
+      'gender',
+      'isFriend',
+      'isFriendRequestSent',
+      'isFriendRequestReceived',
+    ],
+    include: [
+      {
+        model: User,
+        as: 'Friends',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+      {
+        model: User,
+        as: 'Requestees',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+      {
+        model: User,
+        as: 'Requesters',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+    ],
+  });
+};
+
 const activate = async (token) => {
   const user = await User.findOne({ where: { activationToken: token } });
   if (!user) {
@@ -54,7 +105,7 @@ const activate = async (token) => {
 
 const getUsers = async (page, size, authenticatedUser) => {
   const usersWithCount = await User.findAndCountAll({
-    where: { inactive: false, id: { [Sequelize.Op.not]: authenticatedUser ? authenticatedUser.id : 0 } },
+    where: { inactive: false, id: { [Op.not]: authenticatedUser ? authenticatedUser.id : 0 } },
     attributes: [
       'id',
       'username',
@@ -148,6 +199,7 @@ module.exports = {
   save,
   findByEmail,
   findByPhonenumber,
+  findByPhoneNumbers,
   activate,
   getUsers,
   getUser,
