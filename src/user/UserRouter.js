@@ -97,8 +97,9 @@ router.get('/api/1.0/users/token/:token', async (req, res, next) => {
 router.get('/api/1.0/users', pagination, tokenAuthOrNot, async (req, res) => {
   const authenticatedUser = req.authenticatedUser;
   const { page, size } = req.pagination;
+  const search = req.query.search;
 
-  const users = await UserService.getUsers(page, size, authenticatedUser);
+  const users = await UserService.getUsers(page, size, authenticatedUser, search);
   res.send(users);
 });
 

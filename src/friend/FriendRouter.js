@@ -155,7 +155,8 @@ router.get('/api/1.0/friends', pagination, tokenAuthentication, async (req, res,
   try {
     const { page, size } = req.pagination;
     const authenticatedUser = req.authenticatedUser;
-    const result = await FriendService.getFriends(authenticatedUser.id, page, size);
+    const search = req.query.search;
+    const result = await FriendService.getFriends(authenticatedUser.id, page, size, search);
     return res.send(result);
   } catch (err) {
     next(err);

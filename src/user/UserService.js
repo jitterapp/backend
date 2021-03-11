@@ -103,9 +103,31 @@ const activate = async (token) => {
   await user.save();
 };
 
-const getUsers = async (page, size, authenticatedUser) => {
+const getUsers = async (page, size, authenticatedUser, search = '') => {
   const usersWithCount = await User.findAndCountAll({
-    where: { inactive: false, id: { [Op.not]: authenticatedUser ? authenticatedUser.id : 0 } },
+    where: {
+      inactive: false,
+      id: {
+        [Op.not]: authenticatedUser ? authenticatedUser.id : 0,
+      },
+      [Op.or]: [
+        {
+          username: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+        {
+          fullname: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+        {
+          email: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+      ],
+    },
     attributes: [
       'id',
       'username',

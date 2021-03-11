@@ -1,3 +1,5 @@
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const User = require('../user/User');
 const Friend = require('./Friend');
 const FriendRequest = require('./FriendRequest');
@@ -66,7 +68,7 @@ const getFriendRequestsReceived = async (userId, page = 0, size = 10) => {
   return result;
 };
 
-const getFriends = async (userId, page = 0, size = 10) => {
+const getFriends = async (userId, page = 0, size = 10, search = '') => {
   const result = await Friend.findAndCountAll({
     where: {
       userId,
@@ -75,6 +77,25 @@ const getFriends = async (userId, page = 0, size = 10) => {
       model: User,
       as: 'friends',
       attributes: ['id', 'fullname', 'username', 'dob', 'email'],
+      where: {
+        [Op.or]: [
+          {
+            username: {
+              [Op.like]: `%${search}%`,
+            },
+          },
+          {
+            fullname: {
+              [Op.like]: `%${search}%`,
+            },
+          },
+          {
+            email: {
+              [Op.like]: `%${search}%`,
+            },
+          },
+        ],
+      },
     },
     page: page * size,
     limit: size,
