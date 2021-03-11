@@ -165,7 +165,7 @@ describe('User update', () => {
       auth: { email: savedUser.email, password: 'P4ssword' },
     });
     const body = response.body;
-    expect(body.validationErrors.phonenumber).toBe('Phone number is invalid');
+    expect(body.validationErrors.phonenumber).toBe('phonenumber is invalid');
     expect(response.status).toBe(400);
   });
 });

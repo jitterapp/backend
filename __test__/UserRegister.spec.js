@@ -47,7 +47,7 @@ const validUser = {
   password: 'P4ssword',
   dob: '1999-12-22',
   fullname: 'full name',
-  phonenumber: '615-274-8283',
+  phonenumber: '6152748283',
   gender: 1,
 };
 
@@ -81,7 +81,7 @@ describe('User Registration', () => {
     expect(savedUser.fullname).toBe('full name');
     expect(savedUser.dob).toString('1999-12-22T00:00:00.000Z');
     expect(savedUser.gender).toBe(1);
-    expect(savedUser.phonenumber).toBe('615-274-8283');
+    expect(savedUser.phonenumber).toBe('6152748283');
   });
 
   it('hashes the pasword in database', async () => {

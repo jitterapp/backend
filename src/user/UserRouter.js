@@ -2,6 +2,7 @@ const express = require('express');
 const UserService = require('./UserService');
 const router = express.Router();
 const bcrypt = require('bcrypt');
+const PhoneNumberHelper = require('awesome-phonenumber');
 const { check, body } = require('express-validator');
 const pagination = require('../middleware/pagination');
 const validateRequest = require('../middleware/validateRequest');
@@ -30,14 +31,25 @@ router.post(
     .notEmpty()
     .withMessage('Phonenumber is required')
     .bail()
-    .matches(/^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$/)
-    .withMessage('Phone number is invalid')
     .custom(async (phonenumber) => {
-      const user = await UserService.findByPhonenumber(phonenumber);
-      if (user) {
-        throw new Error('phonenumber is already in use');
+      try {
+        const pn = new PhoneNumberHelper(phonenumber, 'US');
+        if (!pn.isValid() || !pn.isPossible()) {
+          throw new Error('phonenumber is invalid');
+        }
+        const user = await UserService.findByPhonenumber(pn.getNumber('significant'));
+        if (user) {
+          throw new Error('phonenumber is already in use');
+        }
+      } catch (err) {
+        throw new Error('phonenumber is invalid');
       }
-    }),
+    })
+    .customSanitizer((phonenumber) => {
+      const pn = new PhoneNumberHelper(phonenumber, 'US');
+      return pn.getNumber('significant');
+    })
+    .bail(),
   check('email')
     .notEmpty()
     .withMessage('Email cannot be null')
@@ -96,14 +108,22 @@ router.post(
     .notEmpty()
     .withMessage('phonenumbers are required')
     .bail()
-    .custom(async (phonenumbers) => {
+    .custom((phonenumbers) => {
       if (!Array.isArray(phonenumbers)) {
         throw new Error('phonenumbers should be array');
       }
       if (!phonenumbers.length) {
-        throw new Error('At leas 1 phonenumber is required');
+        throw new Error('At least 1 phonenumber is required');
       }
-    }),
+      return true;
+    })
+    .customSanitizer((phonenumbers) => {
+      return phonenumbers.map((phonenumber) => {
+        const pn = new PhoneNumberHelper(phonenumber, 'US');
+        return pn.getNumber('significant');
+      });
+    })
+    .bail(),
   tokenAuthOrNot,
   validateRequest,
   async (req, res, next) => {
@@ -193,8 +213,24 @@ router.put(
     .notEmpty()
     .withMessage('Phonenumber is required')
     .bail()
-    .matches(/^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$/)
-    .withMessage('Phone number is invalid'),
+    .custom(async (phonenumber) => {
+      try {
+        const pn = new PhoneNumberHelper(phonenumber, 'US');
+        if (!pn.isValid() || !pn.isPossible()) {
+          throw new Error('phonenumber is invalid');
+        }
+        const user = await UserService.findByPhonenumber(pn.getNumber('significant'));
+        if (user) {
+          throw new Error('phonenumber is already in use');
+        }
+      } catch (err) {
+        throw new Error('phonenumber is invalid');
+      }
+    })
+    .customSanitizer((phonenumber) => {
+      const pn = new PhoneNumberHelper(phonenumber, 'US');
+      return pn.getNumber('significant');
+    }),
   tokenAuthentication,
   validateRequest,
   async (req, res, next) => {

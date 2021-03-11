@@ -46,7 +46,7 @@ const addUsers = async (activeUserCount, inactiveUserCount = 0) => {
       email: `user${i + 1}@mail.com`,
       inactive: i >= activeUserCount,
       password: hash,
-      phonenumber: `615-274-828${i}`,
+      phonenumber: `615274828${i}`,
     });
   }
 };
