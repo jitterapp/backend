@@ -11,5 +11,5 @@ module.exports = (err, req, res, next) => {
   const messageToSend = message || 'Error';
   res
     .status(statusToSend)
-    .send({ path: req.originalUrl, timestamp: new Date().getTime(), messageToSend, validationErrors });
+    .send({ path: req.originalUrl, timestamp: new Date().getTime(), message: messageToSend, validationErrors });
 };

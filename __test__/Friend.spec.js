@@ -1,8 +1,6 @@
 const request = require('supertest');
 const app = require('../src/app');
 const User = require('../src/user/User');
-// const Friend = require('../src/friend/Friend');
-// const FriendRequest = require('../src/friend/FriendRequest');
 const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
 
