@@ -201,7 +201,21 @@ describe('Get user', () => {
     });
 
     const response = await getUser(user.id);
-    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender']);
+    expect(Object.keys(response.body)).toEqual([
+      'isFriend',
+      'isFriendRequestSent',
+      'isFriendRequestReceived',
+      'id',
+      'username',
+      'email',
+      'fullname',
+      'dob',
+      'phonenumber',
+      'gender',
+      'Friends',
+      'Requestees',
+      'Requesters',
+    ]);
   });
   it('returns 404 when user is inactive', async () => {
     const user = await User.create({
@@ -245,6 +259,20 @@ describe('Get me', () => {
     const response = await getUser({
       auth: { email: user.email, password: 'P4ssword' },
     });
-    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender']);
+    expect(Object.keys(response.body)).toEqual([
+      'isFriend',
+      'isFriendRequestSent',
+      'isFriendRequestReceived',
+      'id',
+      'username',
+      'email',
+      'fullname',
+      'dob',
+      'phonenumber',
+      'gender',
+      'Friends',
+      'Requestees',
+      'Requesters',
+    ]);
   });
 });

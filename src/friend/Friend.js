@@ -23,6 +23,6 @@ Friend.init(
   }
 );
 
-Friend.hasMany(User, { as: 'friends', sourceKey: 'friendId', foreignKey: 'id' });
+Friend.hasOne(User, { as: 'friends', sourceKey: 'friendId', foreignKey: 'id' });
 
 module.exports = Friend;

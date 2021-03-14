@@ -151,7 +151,8 @@ router.get(
   tokenAuthOrNot,
   async (req, res, next) => {
     try {
-      const user = await UserService.getUser(req.params.id);
+      const authenticatedUser = req.authenticatedUser;
+      const user = await UserService.getUser(req.params.id, authenticatedUser);
       res.send(user);
     } catch (err) {
       next(err);
@@ -176,7 +177,7 @@ router.put(
   async (req, res, next) => {
     try {
       const authenticatedUser = req.authenticatedUser;
-      const user = await UserService.getUser(authenticatedUser.id, true);
+      const user = await UserService.getUser(authenticatedUser.id, authenticatedUser, true);
       const newPassword = req.body.newPassword;
       const oldPassword = req.body.oldPassword;
       const match = await bcrypt.compare(oldPassword, user.password);

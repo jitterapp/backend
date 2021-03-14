@@ -180,14 +180,54 @@ const getUsers = async (page, size, authenticatedUser, search = '') => {
   };
 };
 
-const getUser = async (id, includePassword = false) => {
-  const attributes = ['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender'];
+const getUser = async (id, authenticatedUser = null, includePassword = false) => {
+  const attributes = [
+    'id',
+    'username',
+    'email',
+    'fullname',
+    'dob',
+    'phonenumber',
+    'gender',
+    'isFriend',
+    'isFriendRequestSent',
+    'isFriendRequestReceived',
+  ];
   if (includePassword) {
     attributes.push('password');
   }
   const user = await User.findOne({
     where: { id: id, inactive: false },
     attributes,
+    include: [
+      {
+        model: User,
+        as: 'Friends',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+      {
+        model: User,
+        as: 'Requestees',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+      {
+        model: User,
+        as: 'Requesters',
+        where: {
+          id: authenticatedUser ? authenticatedUser.id : 0,
+        },
+        required: false,
+        attributes: ['id'],
+      },
+    ],
   });
   if (!user) {
     throw new UserNotFoundException();
