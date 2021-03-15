@@ -60,7 +60,6 @@ const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous =
   }
 
   const jitsWithCount = await Jit.findAndCountAll({
-    subQuery: false,
     where,
     include,
     limit: size,

@@ -90,9 +90,6 @@ describe('Listing users', () => {
       'dob',
       'phonenumber',
       'gender',
-      'Friends',
-      'Requestees',
-      'Requesters',
     ]);
   });
   it('returns 2 as total pages when there are 15 active and 7 inactive users', async () => {
@@ -212,9 +209,11 @@ describe('Get user', () => {
       'dob',
       'phonenumber',
       'gender',
-      'Friends',
-      'Requestees',
-      'Requesters',
+      'friendCount',
+      'likeCount',
+      'favoriteCount',
+      'replyCount',
+      'jitScore',
     ]);
   });
   it('returns 404 when user is inactive', async () => {
@@ -270,9 +269,11 @@ describe('Get me', () => {
       'dob',
       'phonenumber',
       'gender',
-      'Friends',
-      'Requestees',
-      'Requesters',
+      'friendCount',
+      'likeCount',
+      'favoriteCount',
+      'replyCount',
+      'jitScore',
     ]);
   });
 });

@@ -43,7 +43,7 @@ const findByPhonenumber = async (phonenumber) => {
 };
 
 const findByPhoneNumbers = async (authenticatedUser, phonenumbers) => {
-  return await User.findAll({
+  const usersByPhoneNumbers = await User.findAll({
     where: {
       phonenumber: { [Op.in]: phonenumbers },
       id: { [Op.not]: authenticatedUser ? authenticatedUser.id : 0 },
@@ -91,6 +91,16 @@ const findByPhoneNumbers = async (authenticatedUser, phonenumbers) => {
       },
     ],
   });
+
+  const users = usersByPhoneNumbers.map((user) => {
+    const result = user.toJSON();
+    delete result.Friends;
+    delete result.Requestees;
+    delete result.Requesters;
+    return result;
+  });
+
+  return users;
 };
 
 const activate = async (token) => {
@@ -172,8 +182,17 @@ const getUsers = async (page, size, authenticatedUser, search = '') => {
     limit: size,
     offset: size * page,
   });
+
+  const users = usersWithCount.rows.map((user) => {
+    const result = user.toJSON();
+    delete result.Friends;
+    delete result.Requestees;
+    delete result.Requesters;
+    return result;
+  });
+
   return {
-    content: usersWithCount.rows,
+    content: users,
     page,
     size,
     totalPages: Math.ceil(usersWithCount.count / size),
@@ -232,7 +251,25 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
   if (!user) {
     throw new UserNotFoundException();
   }
-  return user;
+
+  const friendCount = await user.countFriends();
+  const likeCount = await user.countJitLikes();
+  const favoriteCount = await user.countJitFavorites();
+  const replyCount = await user.countJitReplies();
+  const jitScore = 5 * replyCount;
+
+  const result = user.toJSON();
+  delete result.Friends;
+  delete result.Requestees;
+  delete result.Requesters;
+
+  result.friendCount = friendCount;
+  result.likeCount = likeCount;
+  result.favoriteCount = favoriteCount;
+  result.replyCount = replyCount;
+  result.jitScore = jitScore;
+
+  return result;
 };
 
 const updateUser = async (id, updateBody) => {
