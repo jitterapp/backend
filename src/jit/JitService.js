@@ -1,3 +1,5 @@
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const User = require('../user/User');
 const Jit = require('./Jit');
 const JitReply = require('./JitReply');
@@ -63,7 +65,7 @@ const postJit = async (userId, content, friendIds = [], ispublic = true, anonymo
   return jit;
 };
 
-const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous = 0, userId = 0) => {
+const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous = 0, userId = 0, search = null) => {
   const where = {};
   if (ispublic) {
     where.ispublic = ispublic;
@@ -72,25 +74,53 @@ const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous =
     where.anonymous = anonymous;
   }
 
-  const include = [
-    {
-      model: User,
-      as: 'creator',
-      foreignKey: 'userId',
-      attributes: {
-        exclude: [
-          'password',
-          'inactive',
-          'activationToken',
-          'createdAt',
-          'updatedAt',
-          'isFriend',
-          'isFriendRequestSent',
-          'isFriendRequestReceived',
-        ],
-      },
+  let userWhere = null;
+  if (search) {
+    userWhere = {
+      [Op.or]: [
+        {
+          username: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+        {
+          fullname: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+        {
+          email: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+      ],
+    };
+  }
+
+  const includeUser = {
+    model: User,
+    as: 'creator',
+    foreignKey: 'userId',
+    attributes: {
+      exclude: [
+        'password',
+        'inactive',
+        'activationToken',
+        'createdAt',
+        'updatedAt',
+        'isFriend',
+        'isFriendRequestSent',
+        'isFriendRequestReceived',
+      ],
     },
-  ];
+  };
+
+  if (userWhere) {
+    includeUser.where = userWhere;
+    includeUser.required = true;
+  }
+
+  const include = [includeUser];
 
   if (userId) {
     include.push({
