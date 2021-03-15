@@ -123,6 +123,24 @@ const unFavoriteJit = async (jitId, options = {}) => {
   return agent.send();
 };
 
+const getAllLikedJits = async (options = {}) => {
+  const agent = request(app).get(`/api/1.0/jits/liked`);
+
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.send();
+};
+
+const getAllFavoritedJits = async (options = {}) => {
+  const agent = request(app).get(`/api/1.0/jits/favorited`);
+
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.send();
+};
+
 describe('Post Jit', () => {
   it('returns forbidden when request is sent unauthorized', async () => {
     const response = await postJit();
@@ -306,6 +324,18 @@ describe('Jit Like', () => {
     expect(unlikeResponse.status).toBe(400);
     expect(unlikeResponse.body.message).toBe('not liked');
   });
+  it('gets all liked jits', async () => {
+    await addUser();
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const response = await postJit('test', null, { token });
+    expect(response.status).toBe(200);
+    const likeResponse = await likeJit(response.body.id, { token });
+    expect(likeResponse.status).toBe(200);
+    const jitsResponse = await getAllLikedJits({ token });
+    expect(jitsResponse.status).toBe(200);
+    expect(jitsResponse.body.count).toBe(1);
+    expect(jitsResponse.body.jits.length).toBe(1);
+  });
 });
 
 describe('Jit Favorite', () => {
@@ -362,5 +392,17 @@ describe('Jit Favorite', () => {
     const unfavoriteResponse = await unFavoriteJit(response.body.id, { token });
     expect(unfavoriteResponse.status).toBe(400);
     expect(unfavoriteResponse.body.message).toBe('not marked favorite');
+  });
+  it('gets all favorited jits', async () => {
+    await addUser();
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const response = await postJit('test', null, { token });
+    expect(response.status).toBe(200);
+    const likeResponse = await favoriteJit(response.body.id, { token });
+    expect(likeResponse.status).toBe(200);
+    const jitsResponse = await getAllFavoritedJits({ token });
+    expect(jitsResponse.status).toBe(200);
+    expect(jitsResponse.body.count).toBe(1);
+    expect(jitsResponse.body.jits.length).toBe(1);
   });
 });

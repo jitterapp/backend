@@ -68,6 +68,28 @@ router.get('/api/1.0/jits', pagination, tokenAuthentication, async (req, res, ne
   }
 });
 
+router.get('/api/1.0/jits/liked', pagination, tokenAuthentication, async (req, res, next) => {
+  try {
+    const authenticatedUser = req.authenticatedUser;
+    const { page, size } = req.pagination;
+    const jits = await JitService.findJitsLiked(authenticatedUser, page, size);
+    res.send(jits);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/api/1.0/jits/favorited', pagination, tokenAuthentication, async (req, res, next) => {
+  try {
+    const authenticatedUser = req.authenticatedUser;
+    const { page, size } = req.pagination;
+    const jits = await JitService.findJitsFavorited(authenticatedUser, page, size);
+    res.send(jits);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/api/1.0/jits/private', pagination, tokenAuthentication, async (req, res, next) => {
   try {
     const authenticatedUser = req.authenticatedUser;

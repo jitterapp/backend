@@ -5,6 +5,46 @@ const JitLike = require('./JitLike');
 const JitFavorite = require('./JitFavorite');
 const JitPrivate = require('./JitPrivate');
 
+const proceedJitsWithCount = async (jitsWithCount, authenticatedUser) => {
+  const jits = [];
+  const { rows } = jitsWithCount;
+  for (let i = 0; i < rows.length; i++) {
+    const jit = rows[i];
+    const replyCount = await jit.countJitReplies();
+    const favoriteCount = await jit.countJitFavorites();
+    const likeCount = await jit.countJitLikes();
+
+    let userReplyCount = 0;
+    let userFavoriteCount = 0;
+    let userLikeCount = 0;
+    if (authenticatedUser) {
+      const authUserId = authenticatedUser.id;
+      userReplyCount = await jit.countJitReplies({ where: { userId: authUserId } });
+      userFavoriteCount = await jit.countJitFavorites({ where: { userId: authUserId } });
+      userLikeCount = await jit.countJitLikes({ where: { userId: authUserId } });
+    }
+
+    const result = jit.toJSON();
+    result.replyCount = replyCount;
+    result.favoriteCount = favoriteCount;
+    result.likeCount = likeCount;
+
+    result.replied = !!userReplyCount;
+    result.favorited = !!userFavoriteCount;
+    result.liked = !!userLikeCount;
+
+    delete result.jitLikes;
+    delete result.jitFavorites;
+
+    jits.push(result);
+  }
+
+  return {
+    jits,
+    count: jitsWithCount.count,
+  };
+};
+
 const postJit = async (userId, content, friendIds = [], ispublic = true, anonymous = false) => {
   const jit = await Jit.create({
     content,
@@ -66,40 +106,9 @@ const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous =
     offset: size * page,
   });
 
-  const jits = [];
-  const { rows } = jitsWithCount;
-  for (let i = 0; i < rows.length; i++) {
-    const jit = rows[i];
-    const replyCount = await jit.countJitReplies();
-    const favoriteCount = await jit.countJitFavorites();
-    const likeCount = await jit.countJitLikes();
+  const result = await proceedJitsWithCount(jitsWithCount, authenticatedUser);
 
-    let userReplyCount = 0;
-    let userFavoriteCount = 0;
-    let userLikeCount = 0;
-    if (authenticatedUser) {
-      const authUserId = authenticatedUser.id;
-      userReplyCount = await jit.countJitReplies({ where: { userId: authUserId } });
-      userFavoriteCount = await jit.countJitFavorites({ where: { userId: authUserId } });
-      userLikeCount = await jit.countJitLikes({ where: { userId: authUserId } });
-    }
-
-    const result = jit.toJSON();
-    result.replyCount = replyCount;
-    result.favoriteCount = favoriteCount;
-    result.likeCount = likeCount;
-
-    result.replied = !!userReplyCount;
-    result.favorited = !!userFavoriteCount;
-    result.liked = !!userLikeCount;
-
-    jits.push(result);
-  }
-
-  return {
-    jits,
-    count: jitsWithCount.count,
-  };
+  return result;
 };
 
 const findJitById = async (id) => {
@@ -209,6 +218,80 @@ const hasJitLike = async (userId, jitId) => {
   return !!has;
 };
 
+const findJitsLiked = async (authenticatedUser, page, size) => {
+  const include = [
+    {
+      model: User,
+      as: 'creator',
+      foreignKey: 'userId',
+      attributes: {
+        exclude: [
+          'password',
+          'inactive',
+          'activationToken',
+          'createdAt',
+          'updatedAt',
+          'isFriend',
+          'isFriendRequestSent',
+          'isFriendRequestReceived',
+        ],
+      },
+    },
+    {
+      model: JitLike,
+      where: {
+        userId: authenticatedUser.id,
+      },
+    },
+  ];
+  const jitsWithCount = await Jit.findAndCountAll({
+    include,
+    limit: size,
+    offset: size * page,
+  });
+
+  const result = await proceedJitsWithCount(jitsWithCount, authenticatedUser);
+
+  return result;
+};
+
+const findJitsFavorited = async (authenticatedUser, page, size) => {
+  const include = [
+    {
+      model: User,
+      as: 'creator',
+      foreignKey: 'userId',
+      attributes: {
+        exclude: [
+          'password',
+          'inactive',
+          'activationToken',
+          'createdAt',
+          'updatedAt',
+          'isFriend',
+          'isFriendRequestSent',
+          'isFriendRequestReceived',
+        ],
+      },
+    },
+    {
+      model: JitFavorite,
+      where: {
+        userId: authenticatedUser.id,
+      },
+    },
+  ];
+  const jitsWithCount = await Jit.findAndCountAll({
+    include,
+    limit: size,
+    offset: size * page,
+  });
+
+  const result = await proceedJitsWithCount(jitsWithCount, authenticatedUser);
+
+  return result;
+};
+
 module.exports = {
   postJit,
   findJits,
@@ -221,4 +304,6 @@ module.exports = {
   unlikeJit,
   unfavoriteJit,
   replyJit,
+  findJitsLiked,
+  findJitsFavorited,
 };
