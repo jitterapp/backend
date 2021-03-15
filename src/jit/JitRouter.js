@@ -61,7 +61,8 @@ router.get('/api/1.0/jits', pagination, tokenAuthentication, async (req, res, ne
   try {
     const authenticatedUser = req.authenticatedUser;
     const { page, size } = req.pagination;
-    const jits = await JitService.findJits(authenticatedUser, page, size, false, false, 0);
+    const { search } = req.query;
+    const jits = await JitService.findJits(authenticatedUser, page, size, false, false, 0, search);
     res.send(jits);
   } catch (err) {
     next(err);
