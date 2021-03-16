@@ -32,17 +32,13 @@ router.post(
     .withMessage('Phonenumber is required')
     .bail()
     .custom(async (phonenumber) => {
-      try {
-        const pn = new PhoneNumberHelper(phonenumber, 'US');
-        if (!pn.isValid() || !pn.isPossible()) {
-          throw new Error('phonenumber is invalid');
-        }
-        const user = await UserService.findByPhonenumber(pn.getNumber('significant'));
-        if (user) {
-          throw new Error('phonenumber is already in use');
-        }
-      } catch (err) {
+      const pn = new PhoneNumberHelper(phonenumber, 'US');
+      if (!pn.isValid() || !pn.isPossible()) {
         throw new Error('phonenumber is invalid');
+      }
+      const user = await UserService.findByPhonenumber(pn.getNumber('significant'));
+      if (user) {
+        throw new Error('phonenumber is already in use');
       }
     })
     .customSanitizer((phonenumber) => {
@@ -109,10 +105,10 @@ router.post(
     .notEmpty()
     .withMessage('phonenumbers are required')
     .bail()
+    .isArray()
+    .withMessage('phonenumbers should be array')
+    .bail()
     .custom((phonenumbers) => {
-      if (!Array.isArray(phonenumbers)) {
-        throw new Error('phonenumbers should be array');
-      }
       if (!phonenumbers.length) {
         throw new Error('At least 1 phonenumber is required');
       }
@@ -149,14 +145,20 @@ router.get('/api/1.0/users/me', tokenAuthentication, async (req, res, next) => {
   }
 });
 
-router.get('/api/1.0/users/:id', tokenAuthOrNot, async (req, res, next) => {
-  try {
-    const user = await UserService.getUser(req.params.id);
-    res.send(user);
-  } catch (err) {
-    next(err);
+router.get(
+  '/api/1.0/users/:id',
+  check('id').isInt().withMessage('id should be integer').bail().toInt(),
+  tokenAuthOrNot,
+  async (req, res, next) => {
+    try {
+      const authenticatedUser = req.authenticatedUser;
+      const user = await UserService.getUser(req.params.id, authenticatedUser);
+      res.send(user);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 router.put(
   '/api/1.0/users/password',
@@ -175,12 +177,12 @@ router.put(
   async (req, res, next) => {
     try {
       const authenticatedUser = req.authenticatedUser;
-      const user = await UserService.getUser(authenticatedUser.id, true);
+      const user = await UserService.getUser(authenticatedUser.id, authenticatedUser, true);
       const newPassword = req.body.newPassword;
       const oldPassword = req.body.oldPassword;
       const match = await bcrypt.compare(oldPassword, user.password);
       if (!match) {
-        return next({ status: 400, message: 'Old password is incorrect' });
+        throw new Error('Old password is incorrect');
       }
       await UserService.updatePassword(authenticatedUser.id, newPassword);
       return res.send({ message: 'Password updated' });

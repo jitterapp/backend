@@ -28,10 +28,10 @@ router.post(
     }
 
     const token = await TokenService.createToken(user);
+    const userInfo = await UserService.getUser(user.id);
 
     res.send({
-      id: user.id,
-      username: user.username,
+      user: userInfo,
       token,
     });
   }

@@ -1,6 +1,11 @@
 const Sequelize = require('sequelize');
 const sequelize = require('../config/database');
 const Token = require('../auth/Token');
+const Jit = require('../jit/Jit');
+const JitReply = require('../jit/JitReply');
+const JitFavorite = require('../jit/JitFavorite');
+const JitLike = require('../jit/JitLike');
+const JitPrivate = require('../jit/JitPrivate');
 
 const Model = Sequelize.Model;
 
@@ -82,5 +87,17 @@ User.belongsToMany(User, {
 });
 
 User.hasMany(Token, { onDelete: 'cascade', foreignKey: 'userId' });
+User.hasMany(Jit, { onDelete: 'cascade', foreignKey: 'userId' });
+User.hasMany(JitReply, { onDelete: 'cascade', foreignKey: 'userId' });
+User.hasMany(JitFavorite, { onDelete: 'cascade', foreignKey: 'userId' });
+User.hasMany(JitLike, { onDelete: 'cascade', foreignKey: 'userId' });
+User.hasMany(JitPrivate, { onDelete: 'cascade', foreignKey: 'userId' });
+
+Jit.belongsTo(User, { as: 'creator', foreignKey: 'userId' });
+
+JitReply.belongsTo(User, { as: 'replier', foreignKey: 'userId' });
+JitFavorite.belongsTo(User, { foreignKey: 'userId' });
+JitLike.belongsTo(User, { foreignKey: 'userId' });
+JitPrivate.belongsTo(User, { foreignKey: 'userId' });
 
 module.exports = User;

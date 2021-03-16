@@ -90,9 +90,6 @@ describe('Listing users', () => {
       'dob',
       'phonenumber',
       'gender',
-      'Friends',
-      'Requestees',
-      'Requesters',
     ]);
   });
   it('returns 2 as total pages when there are 15 active and 7 inactive users', async () => {
@@ -201,7 +198,23 @@ describe('Get user', () => {
     });
 
     const response = await getUser(user.id);
-    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender']);
+    expect(Object.keys(response.body)).toEqual([
+      'isFriend',
+      'isFriendRequestSent',
+      'isFriendRequestReceived',
+      'id',
+      'username',
+      'email',
+      'fullname',
+      'dob',
+      'phonenumber',
+      'gender',
+      'friendCount',
+      'likeCount',
+      'favoriteCount',
+      'replyCount',
+      'jitScore',
+    ]);
   });
   it('returns 404 when user is inactive', async () => {
     const user = await User.create({
@@ -245,6 +258,22 @@ describe('Get me', () => {
     const response = await getUser({
       auth: { email: user.email, password: 'P4ssword' },
     });
-    expect(Object.keys(response.body)).toEqual(['id', 'username', 'email', 'fullname', 'dob', 'phonenumber', 'gender']);
+    expect(Object.keys(response.body)).toEqual([
+      'isFriend',
+      'isFriendRequestSent',
+      'isFriendRequestReceived',
+      'id',
+      'username',
+      'email',
+      'fullname',
+      'dob',
+      'phonenumber',
+      'gender',
+      'friendCount',
+      'likeCount',
+      'favoriteCount',
+      'replyCount',
+      'jitScore',
+    ]);
   });
 });
