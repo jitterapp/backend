@@ -91,6 +91,7 @@ describe('Listing users', () => {
       'phonenumber',
       'gender',
       'image',
+      'isBlocked',
     ]);
   });
   it('returns 2 as total pages when there are 15 active and 7 inactive users', async () => {
@@ -215,6 +216,7 @@ describe('Get user', () => {
       'favoriteCount',
       'replyCount',
       'jitScore',
+      'isBlocked',
     ]);
   });
   it('returns 404 when user is inactive', async () => {
@@ -275,6 +277,7 @@ describe('Get me', () => {
       'favoriteCount',
       'replyCount',
       'jitScore',
+      'isBlocked',
     ]);
   });
 });

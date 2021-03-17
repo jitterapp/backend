@@ -186,13 +186,16 @@ const getUsers = async (page, size, authenticatedUser, search = '') => {
     offset: size * page,
   });
 
-  const users = usersWithCount.rows.map((user) => {
-    const result = user.toJSON();
-    delete result.Friends;
-    delete result.Requestees;
-    delete result.Requesters;
-    return result;
-  });
+  const users = [];
+  const rows = usersWithCount.rows;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i].toJSON();
+    delete row.Friends;
+    delete row.Requestees;
+    delete row.Requesters;
+    row.isBlocked = await isBlocked(authenticatedUser ? authenticatedUser.id : 0, row.id);
+    users.push(row);
+  }
 
   return {
     content: users,
@@ -260,7 +263,7 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
   const favoriteCount = await user.countJitFavorites();
   const replyCount = await user.countJitReplies();
   const jitScore = 5 * replyCount;
-  const isBlocked = await isBlocked(authenticatedUser ? authenticatedUser.id : 0, id);
+  const blocked = await isBlocked(authenticatedUser ? authenticatedUser.id : 0, id);
 
   const result = user.toJSON();
   delete result.Friends;
@@ -272,7 +275,7 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
   result.favoriteCount = favoriteCount;
   result.replyCount = replyCount;
   result.jitScore = jitScore;
-  result.isBlocked = isBlocked;
+  result.isBlocked = blocked;
 
   return result;
 };
@@ -317,14 +320,54 @@ const unblockUser = async (userId, blockedUserId) => {
   });
 };
 
-const isBlocked = async (userId, blockedUserId) => {
-  const count = await User.countUserBlocks({
+const findBlockedUsers = async (userId, page = 0, size = 10, search = '') => {
+  const users = UserBlock.findAndCountAll({
     where: {
       userId,
-      blockedUserId,
     },
+    include: {
+      model: User,
+      as: 'user',
+      attributes: ['id', 'fullname', 'username', 'dob', 'email'],
+      where: {
+        [Op.or]: [
+          {
+            username: {
+              [Op.like]: `%${search}%`,
+            },
+          },
+          {
+            fullname: {
+              [Op.like]: `%${search}%`,
+            },
+          },
+          {
+            email: {
+              [Op.like]: `%${search}%`,
+            },
+          },
+        ],
+      },
+    },
+    page: page * size,
+    limit: size,
   });
-  return !!count;
+
+  return users;
+};
+
+const isBlocked = async (userId, blockedUserId) => {
+  const user = await User.findByPk(userId);
+  if (user) {
+    const count = await user.countUserblocks({
+      where: {
+        userId,
+        blockedUserId,
+      },
+    });
+    return !!count;
+  }
+  return false;
 };
 
 module.exports = {
@@ -341,4 +384,5 @@ module.exports = {
   isBlocked,
   blockUser,
   unblockUser,
+  findBlockedUsers,
 };

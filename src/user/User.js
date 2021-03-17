@@ -107,6 +107,6 @@ JitReply.belongsTo(User, { as: 'replier', foreignKey: 'userId' });
 JitFavorite.belongsTo(User, { foreignKey: 'userId' });
 JitLike.belongsTo(User, { foreignKey: 'userId' });
 JitPrivate.belongsTo(User, { foreignKey: 'userId' });
-UserBlock.belongsTo(User, { foreignKey: 'blockedUserId' });
+UserBlock.belongsTo(User, { as: 'user', foreignKey: 'blockedUserId' });
 
 module.exports = User;

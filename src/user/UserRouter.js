@@ -268,12 +268,25 @@ router.delete(
   }
 );
 
+// get blocked users
+router.get('/api/1.0/userblocks', pagination, tokenAuthentication, async (req, res, next) => {
+  try {
+    const { page, size } = req.pagination;
+    const authenticatedUser = req.authenticatedUser;
+    const search = req.query.search;
+    const result = await UserService.findBlockedUsers(authenticatedUser.id, page, size, search);
+    return res.send(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post(
-  '/api/1.0/users/block/:userId',
-  check('id').isInt().withMessage('userId should be integer').bail().toInt(),
+  '/api/1.0/userblocks/:userId',
+  check('userId').isInt().withMessage('userId should be integer').bail().toInt(),
   validateRequest,
   tokenAuthentication,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const userId = req.params.userId;
       const authenticatedUser = req.authenticatedUser;
@@ -284,36 +297,37 @@ router.post(
       if (!user) {
         throw new Error('can not find user');
       }
-      const isBlocked = await isBlocked(authenticatedUser.id, userId);
-      if (isBlocked) {
+      const blocked = await UserService.isBlocked(authenticatedUser.id, userId);
+      if (blocked) {
         throw new Error('already blocked');
       }
       await UserService.blockUser(authenticatedUser.id, userId);
-      return res.send(user);
+      const result = await UserService.getUser(userId, authenticatedUser);
+      return res.send(result);
     } catch (err) {
-      throw new Error(err);
+      next(err);
     }
   }
 );
 
 router.delete(
-  '/api/1.0/users/block/:userId',
-  check('id').isInt().withMessage('userId should be integer').bail().toInt(),
+  '/api/1.0/userblocks/:userId',
+  check('userId').isInt().withMessage('userId should be integer').bail().toInt(),
   validateRequest,
   tokenAuthentication,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const userId = req.params.userId;
       const authenticatedUser = req.authenticatedUser;
-      const isBlocked = await isBlocked(authenticatedUser.id, userId);
+      const isBlocked = await UserService.isBlocked(authenticatedUser.id, userId);
       if (!isBlocked) {
         throw new Error('not blocked');
       }
       await UserService.unblockUser(authenticatedUser.id, userId);
-      const user = await UserService.getUser(userId);
+      const user = await UserService.getUser(userId, authenticatedUser);
       return res.send(user);
     } catch (err) {
-      throw new Error(err);
+      next(err);
     }
   }
 );
