@@ -1,4 +1,5 @@
 const User = require('./User');
+const UserBlock = require('./UserBlock');
 const bcrypt = require('bcrypt');
 const EmailService = require('../email/EmailService');
 const sequelize = require('../config/database');
@@ -257,6 +258,7 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
   const favoriteCount = await user.countJitFavorites();
   const replyCount = await user.countJitReplies();
   const jitScore = 5 * replyCount;
+  const isBlocked = await isBlocked(authenticatedUser ? authenticatedUser.id : 0, id);
 
   const result = user.toJSON();
   delete result.Friends;
@@ -268,6 +270,7 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
   result.favoriteCount = favoriteCount;
   result.replyCount = replyCount;
   result.jitScore = jitScore;
+  result.isBlocked = isBlocked;
 
   return result;
 };
@@ -294,6 +297,33 @@ const updatePassword = async (id, password) => {
   await user.save();
 };
 
+const blockUser = async (userId, blockedUserId) => {
+  const userBlock = await UserBlock.create({
+    userId,
+    blockedUserId,
+  });
+  return userBlock;
+};
+
+const unblockUser = async (userId, blockedUserId) => {
+  await UserBlock.destroy({
+    where: {
+      userId,
+      blockedUserId,
+    },
+  });
+};
+
+const isBlocked = async (userId, blockedUserId) => {
+  const count = await User.countUserBlocks({
+    where: {
+      userId,
+      blockedUserId,
+    },
+  });
+  return !!count;
+};
+
 module.exports = {
   save,
   findByEmail,
@@ -305,4 +335,7 @@ module.exports = {
   updateUser,
   deleteUser,
   updatePassword,
+  isBlocked,
+  blockUser,
+  unblockUser,
 };
