@@ -24,6 +24,9 @@ User.init(
     dob: {
       type: Sequelize.DATE,
     },
+    image: {
+      type: Sequelize.STRING,
+    },
     phonenumber: {
       type: Sequelize.STRING,
       unique: true,

@@ -75,7 +75,7 @@ describe('Listing users', () => {
     const response = await getUsers();
     expect(response.body.content.length).toBe(6);
   });
-  it('returns only id, username, fullname, email and dob in content array for each user', async () => {
+  it('returns id, username, fullname, email, image, phonenumber, and dob in content array for each user', async () => {
     await addUsers(6, 5);
     const response = await getUsers();
     const user = response.body.content[0];
@@ -90,6 +90,7 @@ describe('Listing users', () => {
       'dob',
       'phonenumber',
       'gender',
+      'image',
     ]);
   });
   it('returns 2 as total pages when there are 15 active and 7 inactive users', async () => {
