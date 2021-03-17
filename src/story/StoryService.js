@@ -1,7 +1,10 @@
+const fs = require('fs');
+const path = require('path');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const Story = require('./Story');
 const User = require('../user/User');
+const { putPublicS3 } = require('../shared/aws');
 
 const findStoryById = async (id) => {
   const story = Story.findOne({
@@ -89,9 +92,18 @@ const findStories = async (page, size, search = null) => {
 };
 
 const postStory = async (userId, resource) => {
+  const file = `uploads/${resource}`;
+  const fileStream = fs.createReadStream(file);
+  const key = path.basename(file);
+  let location = resource;
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
+    location = await putPublicS3(`stories/${userId}/${key}`, fileStream);
+  }
+  fs.unlinkSync(file);
+
   const story = await Story.create({
     userId,
-    resource,
+    resource: location,
   });
 
   return story;

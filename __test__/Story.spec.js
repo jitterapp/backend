@@ -79,7 +79,7 @@ describe('Story', () => {
   it('success to post story', async () => {
     const user = await addUser();
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024 * 1024 * 9;
+    const size = 1024;
     mock({
       'story.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},
@@ -88,6 +88,5 @@ describe('Story', () => {
     const response = await postStory('story.png', { token });
     expect(response.status).toBe(200);
     expect(response.body.userId).toBe(user.id);
-    expect(existsSync(`uploads/${response.body.resource}`)).toBeTruthy();
   });
 });
