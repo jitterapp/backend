@@ -252,4 +252,23 @@ router.delete(
   }
 );
 
+router.get(
+  '/api/1.0/jits/:jitId',
+  check('jitId').isInt().withMessage('jitId should be integer').bail().toInt(),
+  tokenAuthentication,
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const { jitId } = req.params;
+      const jit = await JitService.findJitById(jitId);
+      if (!jit) {
+        throw new Error('can not find jit');
+      }
+      return res.send(jit);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 module.exports = router;
