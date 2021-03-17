@@ -3,6 +3,8 @@ const app = require('../src/app');
 const User = require('../src/user/User');
 const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
+const fs = require('fs');
+const path = require('path');
 
 const credentials = { email: 'user1@mail.com', password: 'P4ssword' };
 
@@ -16,6 +18,11 @@ beforeEach(async () => {
 
 const activeUser = { username: 'user1', email: 'user1@mail.com', password: 'P4ssword', inactive: false };
 
+const readFileAsBase64 = (file = 'test-png.png') => {
+  const filePath = path.join('.', '__test__', 'resources', file);
+  return fs.readFileSync(filePath, { encoding: 'base64' });
+};
+
 const addUser = async (user = { ...activeUser }) => {
   const hash = await bcryt.hash(user.password, 10);
   user.password = hash;
@@ -26,8 +33,10 @@ const putUser = async (id = 5, body = null, options = {}) => {
   let agent = request(app);
   let token;
   if (options.auth) {
+    console.log('here');
     const response = await agent.post('/api/1.0/auth').send(options.auth);
     token = response.body.token;
+    console.log(token);
   }
 
   agent = request(app).put('/api/1.0/users/' + id);
@@ -213,5 +222,15 @@ describe('User update password', () => {
     expect(response.status).toBe(200);
     const body = response.body;
     expect(body.message).toBe('Password updated');
+  });
+  it('saves the user image when upate contains as image as base64', async () => {
+    const fileInBase64 = readFileAsBase64();
+    const savedUser = await addUser();
+    const validUpdate = { username: 'user1-updated', image: fileInBase64 };
+    await putUser(savedUser.id, validUpdate, {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    const inDBUser = await User.findOne({ where: { id: savedUser.id } });
+    expect(inDBUser.image).toBeTruthy();
   });
 });

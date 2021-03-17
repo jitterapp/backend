@@ -279,6 +279,8 @@ const updateUser = async (id, updateBody) => {
   user.fullname = updateBody.fullname || user.fullname;
   user.phonenumber = updateBody.phonenumber || user.phonenumber;
   user.gender = updateBody.gender || user.gender;
+  console.log(updateBody, 'herere');
+  user.image = updateBody.image;
   await user.save();
 };
 
