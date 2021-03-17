@@ -5,7 +5,6 @@ const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
 const fs = require('fs');
 const path = require('path');
-
 const credentials = { email: 'user1@mail.com', password: 'P4ssword' };
 
 beforeAll(async () => {
@@ -33,10 +32,8 @@ const putUser = async (id = 5, body = null, options = {}) => {
   let agent = request(app);
   let token;
   if (options.auth) {
-    console.log('here');
     const response = await agent.post('/api/1.0/auth').send(options.auth);
     token = response.body.token;
-    console.log(token);
   }
 
   agent = request(app).put('/api/1.0/users/' + id);
