@@ -6,6 +6,7 @@ const JitReply = require('../jit/JitReply');
 const JitFavorite = require('../jit/JitFavorite');
 const JitLike = require('../jit/JitLike');
 const JitPrivate = require('../jit/JitPrivate');
+const Story = require('../story/Story');
 
 const Model = Sequelize.Model;
 
@@ -92,8 +93,10 @@ User.hasMany(JitReply, { onDelete: 'cascade', foreignKey: 'userId' });
 User.hasMany(JitFavorite, { onDelete: 'cascade', foreignKey: 'userId' });
 User.hasMany(JitLike, { onDelete: 'cascade', foreignKey: 'userId' });
 User.hasMany(JitPrivate, { onDelete: 'cascade', foreignKey: 'userId' });
+User.hasMany(Story, { onDelete: 'cascade', foreignKey: 'userId' });
 
 Jit.belongsTo(User, { as: 'creator', foreignKey: 'userId' });
+Story.belongsTo(User, { as: 'creator', foreignKey: 'userId' });
 
 JitReply.belongsTo(User, { as: 'replier', foreignKey: 'userId' });
 JitFavorite.belongsTo(User, { foreignKey: 'userId' });
