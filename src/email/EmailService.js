@@ -25,6 +25,29 @@ const sendAccountActivation = async (email, token) => {
   }
 };
 
+const sendPasswordReset = async (email, token) => {
+  const mailOptions = await transporter.sendMail({
+    from: 'lawrence.nicastro1@gmail.com',
+    to: email,
+    subject: 'Reset your password',
+    html: `
+    <div>
+      <b>Please click link below to reset your password</b>
+    </div>
+    <div>
+      <a href="${apiBase}/reset.html?token=${token}">Reset</a>
+    </div>
+    `,
+  });
+  // if (process.env.NODE_ENV === 'development') {
+  //   console.log('url: ' + nodemailer.getTestMessageUrl(info));
+  // }
+  if (process.env.NODE_ENV === 'production') {
+    return 'url: ' + nodemailer.getTestMessageUrl(mailOptions);
+  }
+};
+
 module.exports = {
   sendAccountActivation,
+  sendPasswordReset,
 };

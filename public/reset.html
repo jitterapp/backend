@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <div class="min-h-screen flex items-center justify-center bg-gray-50 p-2">
+      <div class="max-w-md w-full space-y-8">
+        <div>
+          <img class="mx-auto h-12 w-auto" src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg" alt="Workflow">
+          <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Reset Password
+          </h2>
+        </div>
+        <div id="success-message">
+          <div class="flex justify-center items-center m-1 font-medium py-1 px-2 bg-white rounded-md text-green-700 bg-green-100 border border-green-300 ">
+            <div slot="avatar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check-circle w-5 h-5 mx-2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+            <div class="text-xl font-normal  max-w-full flex-initial">
+              You reset your password
+              <div class="text-sm font-base">You can login with your new password now</div>
+            </div>
+            <div class="flex flex-auto flex-row-reverse">
+                <div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x cursor-pointer hover:text-green-400 rounded-full w-5 h-5 ml-2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </div>
+            </div>
+          </div>
+        </div>
+        <form id="form" class="mt-8 space-y-6" onsubmit="event.preventDefault(); submitForm()">
+          <div class="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label for="password" class="sr-only">Password</label>
+              <input id="password" name="password" type="password" autocomplete="password" required required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Password">
+            </div>
+            <div>
+              <label for="confirm-password" class="sr-only">Confirm Password</label>
+              <input id="confirm-password" name="confirm-password" type="password" autocomplete="confirm-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Confirm Password">
+            </div>
+          </div>
+          <div id="error" class="text-red-500 px-2">Error</div>
+    
+          <div>
+            <button id="button" type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                <!-- Heroicon name: solid/lock-closed -->
+                <svg class="h-5 w-5 text-indigo-500 group-hover:text-indigo-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                </svg>
+                </svg>
+              </span>
+              Reset
+            </button>
+            <div id="loading">
+              <div class="w-full flex justify-center items-center">
+                <div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-6 w-6"></div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  function findGetParameter(parameterName) {
+    var result = null,
+    tmp = [];
+    var items = location.search.substr(1).split("&");
+    for (var index = 0; index < items.length; index++) {
+      tmp = items[index].split("=");
+      if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
+    }
+    return result;
+  }
+
+  function submitForm(e) {
+    $("#error").hide();
+    var password = $("#password").val();
+    var confirmPassword = $("#confirm-password").val();
+    if (password !== confirmPassword) {
+      $("#error").text("Password mismatch!");
+      $("#error").show();
+      return;
+    }
+    $('#loading').show();
+    $('#button').hide();
+    const token = findGetParameter('token');
+    $.ajax({
+      type: "PUT",
+      url: window.location.origin + '/api/1.0/password/reset',
+      data: JSON.stringify({
+        token,
+        password
+      }),
+      contentType: "application/json",
+      success: function (res) {
+        $("#form").hide();
+        $("#success-message").show();
+        $('#loading').hide();
+        $('#button').show();
+      },
+      error: function(req, status, error) {
+        $('#loading').hide();
+        $('#button').show();
+        const errors = req.responseJSON.validationErrors;
+        if (errors) {
+          if (errors.token) {
+            $("#error").text(errors.token);
+          } else if (errors.password) {
+            $("#error").text(errors.password);
+          }
+        } else {
+          $("#error").text(req.responseJSON.message);
+        }
+
+        $("#error").show();
+      }
+    });
+    return false;
+  }
+</script>
+<style>
+  .loader {
+    border-top-color: #3498db;
+    -webkit-animation: spinner 1.5s linear infinite;
+    animation: spinner 1.5s linear infinite;
+  }
+  
+  @-webkit-keyframes spinner {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+  }
+  
+  @keyframes spinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  #loading {
+    display: none;
+  }
+  #error {
+    display: none;
+  }
+  #success-message {
+    display: none;
+  }
+</style>

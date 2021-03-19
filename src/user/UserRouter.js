@@ -332,4 +332,66 @@ router.delete(
   }
 );
 
+router.post(
+  '/api/1.0/password/reset',
+  check('email')
+    .notEmpty()
+    .withMessage('Email can not be null')
+    .bail()
+    .isEmail()
+    .withMessage('Email is not valid')
+    .bail()
+    .custom(async (email) => {
+      const user = await UserService.findByEmail(email);
+      if (!user) {
+        throw new Error('email is not registered');
+      }
+    }),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const user = await UserService.sendResetPassword(req.body.email);
+      const result = user.toJSON();
+      delete result.password;
+      delete result.activationToken;
+      delete result.isFriendRequestSent;
+      delete result.isFriend;
+      delete result.isFriendRequestReceived;
+      res.send(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.put(
+  '/api/1.0/password/reset',
+  check('token').notEmpty().withMessage('token is required').bail(),
+  check('password')
+    .notEmpty()
+    .withMessage('Password cannot be null')
+    .bail()
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters')
+    .bail()
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/)
+    .withMessage('Password must have at least one lowercase letter, one uppercase, and 1 number'),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const { token, password } = req.body;
+      const user = await UserService.resetPassword(token, password);
+      const result = user.toJSON();
+      delete result.password;
+      delete result.activationToken;
+      delete result.isFriendRequestSent;
+      delete result.isFriend;
+      delete result.isFriendRequestReceived;
+      res.send(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

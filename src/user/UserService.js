@@ -9,10 +9,10 @@ const EmailException = require('../email/EmailException');
 const InvalidTokenException = require('./InvalidTokenException');
 const UserNotFoundException = require('./UserNotFoundException');
 const { randomString } = require('../shared/generator');
+const saltRounds = 10;
 
 const save = async (body) => {
   const { fullname, username, email, password, dob, phonenumber, gender } = body;
-  const saltRounds = 10;
   const hash = await bcrypt.hash(password, saltRounds);
   const user = {
     fullname,
@@ -297,7 +297,6 @@ const deleteUser = async (id) => {
 
 const updatePassword = async (id, password) => {
   const user = await User.findOne({ where: { id: id } });
-  const saltRounds = 10;
   const hash = await bcrypt.hash(password, saltRounds);
   user.password = hash;
   await user.save();
@@ -370,6 +369,35 @@ const isBlocked = async (userId, blockedUserId) => {
   return false;
 };
 
+const sendResetPassword = async (email) => {
+  try {
+    const activationToken = randomString(16);
+    const user = await findByEmail(email);
+    user.activationToken = activationToken;
+    await user.save();
+    await EmailService.sendPasswordReset(email, user.activationToken);
+    return user;
+  } catch (err) {
+    throw new EmailException();
+  }
+};
+
+const resetPassword = async (token, password) => {
+  const user = await User.findOne({
+    where: {
+      activationToken: token,
+    },
+  });
+  if (!user) {
+    throw new Error('user not found');
+  }
+  const hash = await bcrypt.hash(password, saltRounds);
+  user.activationToken = '';
+  user.password = hash;
+  user.save();
+  return user;
+};
+
 module.exports = {
   save,
   findByEmail,
@@ -385,4 +413,6 @@ module.exports = {
   blockUser,
   unblockUser,
   findBlockedUsers,
+  sendResetPassword,
+  resetPassword,
 };

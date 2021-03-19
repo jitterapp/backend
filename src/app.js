@@ -7,6 +7,7 @@ const FriendRouter = require('./friend/FriendRouter');
 const JitRouter = require('./jit/JitRouter');
 const StoryRouter = require('./story/StoryRouter');
 
+app.use(express.static('public'));
 app.use(express.json());
 
 app.use(UserRouter);
