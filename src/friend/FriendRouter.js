@@ -6,6 +6,7 @@ const UserService = require('../user/UserService');
 const pagination = require('../middleware/pagination');
 const tokenAuthentication = require('../middleware/tokenAuthentication');
 const validateRequest = require('../middleware/validateRequest');
+const logActivity = require('../middleware/logActivity');
 
 // friend request
 router.post(
@@ -48,11 +49,13 @@ router.post(
       }
 
       const result = await FriendService.friendRequest(authenticatedUser.id, userId);
-      return res.send(result);
+      res.result = result;
+      return next();
     } catch (err) {
       next(err);
     }
-  }
+  },
+  logActivity(3)
 );
 
 // accept friend request
@@ -71,11 +74,13 @@ router.put(
       }
       const result = await FriendService.acceptFriend(requesterId, authenticatedUser.id);
       await FriendService.rejectFriendRequest(authenticatedUser.id, requesterId);
-      res.send(result);
+      res.result = result;
+      return next();
     } catch (err) {
       next(err);
     }
-  }
+  },
+  logActivity(4)
 );
 
 // remove friend
@@ -96,14 +101,16 @@ router.delete(
       const result = await FriendService.cancelFriend(userId, friendId);
 
       if (result) {
-        return res.status(200).send({ message: 'canceled friend' });
+        res.result = { message: 'canceled friend' };
+        return next();
       } else {
         throw new Error('failed to cancel friend request');
       }
     } catch (err) {
       next(err);
     }
-  }
+  },
+  logActivity(6)
 );
 
 // reject friend request
@@ -118,14 +125,16 @@ router.delete(
       const authenticatedUser = req.authenticatedUser;
       const result = await FriendService.rejectFriendRequest(authenticatedUser.id, requesterId);
       if (result) {
-        return res.status(200).send({ message: 'rejected friend request' });
+        res.result = { message: 'rejected friend request' };
+        return next();
       } else {
         throw new Error('failed to reject friend request');
       }
     } catch (err) {
       next(err);
     }
-  }
+  },
+  logActivity(5)
 );
 
 // cancel friend request
