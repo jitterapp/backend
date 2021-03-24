@@ -234,6 +234,7 @@ router.put(
       const pn = new PhoneNumberHelper(phonenumber, 'US');
       return pn.getNumber('significant');
     }),
+  check('public').if(body('public').exists()).isBoolean().withMessage('public field should be boolean').bail(),
   tokenAuthentication,
   validateRequest,
   async (req, res, next) => {

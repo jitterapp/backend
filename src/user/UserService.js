@@ -215,6 +215,8 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
     'phonenumber',
     'gender',
     'isFriend',
+    'public',
+    'complete',
     'isFriendRequestSent',
     'isFriendRequestReceived',
   ];
@@ -288,6 +290,11 @@ const updateUser = async (id, updateBody) => {
   user.phonenumber = updateBody.phonenumber || user.phonenumber;
   user.gender = updateBody.gender || user.gender;
   user.image = updateBody.image;
+  user.complete = 1;
+  // eslint-disable-next-line no-prototype-builtins
+  if (updateBody.hasOwnProperty('public')) {
+    user.public = updateBody.public;
+  }
   await user.save();
 };
 

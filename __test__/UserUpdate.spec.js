@@ -132,16 +132,49 @@ describe('User update', () => {
     expect(inDBUser.username).toBe(validUpdate.username);
     expect(inDBUser.fullname).toBe(validUpdate.fullname);
   });
-  it('updates username, fullname, dob in database when valid update request is sent from authorized user', async () => {
+  it('updates username, fullname, dob, public in database when valid update request is sent from authorized user', async () => {
     const savedUser = await addUser();
-    const validUpdate = { username: 'user1-updated', fullname: 'updated fullname', dob: '1999-02-25' };
+    const validUpdate = { username: 'user1-updated', fullname: 'updated fullname', dob: '1999-02-25', public: false };
     const response = await putUser(savedUser.id, validUpdate, {
       auth: { email: savedUser.email, password: 'P4ssword' },
     });
     const inDBUser = await User.findOne({ where: { id: savedUser.id } });
     expect(inDBUser.username).toBe(validUpdate.username);
     expect(inDBUser.fullname).toBe(validUpdate.fullname);
+    expect(inDBUser.complete).toBe(true);
+    expect(inDBUser.public).toBe(false);
     expect(inDBUser.dob).toString(`${validUpdate.dob}T00:00:00.000Z`);
+    expect(response.status).toBe(200);
+  });
+  it('fails to update status', async () => {
+    const savedUser = await addUser();
+    const validUpdate = { public: 11 };
+    const response = await putUser(savedUser.id, validUpdate, {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    const inDBUser = await User.findOne({ where: { id: savedUser.id } });
+    expect(response.body.validationErrors.public).toBe('public field should be boolean');
+    expect(inDBUser.public).toBe(true);
+    expect(response.status).toBe(400);
+  });
+  it('updates status to false', async () => {
+    const savedUser = await addUser();
+    const validUpdate = { public: false };
+    const response = await putUser(savedUser.id, validUpdate, {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    const inDBUser = await User.findOne({ where: { id: savedUser.id } });
+    expect(inDBUser.public).toBe(false);
+    expect(response.status).toBe(200);
+  });
+  it('updates status to true', async () => {
+    const savedUser = await addUser();
+    const validUpdate = { public: true };
+    const response = await putUser(savedUser.id, validUpdate, {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    const inDBUser = await User.findOne({ where: { id: savedUser.id } });
+    expect(inDBUser.public).toBe(true);
     expect(response.status).toBe(200);
   });
   it('fails to update fullname', async () => {

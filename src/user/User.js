@@ -47,6 +47,14 @@ User.init(
       type: Sequelize.BOOLEAN,
       defaultValue: true,
     },
+    public: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: true,
+    },
+    complete: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false,
+    },
     activationToken: {
       type: Sequelize.STRING,
     },
