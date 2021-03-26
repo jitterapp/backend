@@ -9,7 +9,7 @@ UserBlock.init(
   {},
   {
     sequelize,
-    modelName: 'userblock',
+    modelName: 'userBlock',
   }
 );
 

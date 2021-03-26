@@ -9,6 +9,7 @@ const JitPrivate = require('../jit/JitPrivate');
 const Story = require('../story/Story');
 const UserBlock = require('./UserBlock');
 const Activity = require('../activity/Activity');
+const UserImage = require('./UserImage');
 
 const Model = Sequelize.Model;
 
@@ -109,6 +110,7 @@ User.hasMany(JitPrivate, { onDelete: 'cascade', foreignKey: 'userId' });
 User.hasMany(Story, { onDelete: 'cascade', foreignKey: 'userId' });
 User.hasMany(UserBlock, { onDelete: 'cascade', foreignKey: 'userId' });
 User.hasMany(Activity, { onDelete: 'cascade', foreignKey: 'userId' });
+User.hasMany(UserImage, { onDelete: 'cascade', foreignKey: 'userId' });
 
 Jit.belongsTo(User, { as: 'creator', foreignKey: 'userId' });
 Story.belongsTo(User, { as: 'creator', foreignKey: 'userId' });

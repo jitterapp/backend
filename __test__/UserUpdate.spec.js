@@ -1,10 +1,10 @@
 const request = require('supertest');
+const mock = require('mock-fs');
+const { existsSync } = require('fs');
 const app = require('../src/app');
 const User = require('../src/user/User');
 const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
-const fs = require('fs');
-const path = require('path');
 const credentials = { email: 'user1@mail.com', password: 'P4ssword' };
 
 beforeAll(async () => {
@@ -16,11 +16,6 @@ beforeEach(async () => {
 });
 
 const activeUser = { username: 'user1', email: 'user1@mail.com', password: 'P4ssword', inactive: false };
-
-const readFileAsBase64 = (file = 'test-png.png') => {
-  const filePath = path.join('.', '__test__', 'resources', file);
-  return fs.readFileSync(filePath, { encoding: 'base64' });
-};
 
 const addUser = async (user = { ...activeUser }) => {
   const hash = await bcryt.hash(user.password, 10);
@@ -44,6 +39,24 @@ const putUser = async (id = 5, body = null, options = {}) => {
     agent.set('Authorization', `Bearer ${options.token}`);
   }
   return agent.send(body);
+};
+
+const putUserWithImage = async (id = 5, file = null, options = {}) => {
+  let agent = request(app);
+  let token;
+  if (options.auth) {
+    const response = await agent.post('/api/1.0/auth').send(options.auth);
+    token = response.body.token;
+  }
+
+  agent = request(app).put('/api/1.0/users/' + id);
+  if (token) {
+    agent.set('Authorization', `Bearer ${token}`);
+  }
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.attach('image', file, 'profile.png');
 };
 
 const updatePassword = async (body = null, options = {}) => {
@@ -207,6 +220,35 @@ describe('User update', () => {
     expect(body.validationErrors.phonenumber).toBe('phonenumber is invalid');
     expect(response.status).toBe(400);
   });
+  it('fails to save large image', async () => {
+    const savedUser = await addUser();
+    const size = 1024 * 1024 * 11;
+    mock({
+      'profile.png': Buffer.from('a '.repeat(size).split(' ')),
+      uploads: {},
+    });
+    expect(existsSync('profile.png')).toBeTruthy();
+    const response = await putUserWithImage(savedUser.id, 'profile.png', {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    expect(response.body.message).toBe('File too large');
+    expect(response.status).toBe(400);
+  });
+  it('success to save profile image', async () => {
+    const savedUser = await addUser();
+    const size = 1024;
+    mock({
+      'profile.png': Buffer.from('a '.repeat(size).split(' ')),
+      uploads: {},
+    });
+    expect(existsSync('profile.png')).toBeTruthy();
+    const response = await putUserWithImage(savedUser.id, 'profile.png', {
+      auth: { email: savedUser.email, password: 'P4ssword' },
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.id).toBe(savedUser.id);
+    expect(response.body.image).toBeTruthy();
+  });
 });
 describe('User update password', () => {
   it('returns forbidden when request sent without authentication', async () => {
@@ -252,15 +294,5 @@ describe('User update password', () => {
     expect(response.status).toBe(200);
     const body = response.body;
     expect(body.message).toBe('Password updated');
-  });
-  it('saves the user image when upate contains as image as base64', async () => {
-    const fileInBase64 = readFileAsBase64();
-    const savedUser = await addUser();
-    const validUpdate = { username: 'user1-updated', image: fileInBase64 };
-    await putUser(savedUser.id, validUpdate, {
-      auth: { email: savedUser.email, password: 'P4ssword' },
-    });
-    const inDBUser = await User.findOne({ where: { id: savedUser.id } });
-    expect(inDBUser.image).toBeTruthy();
   });
 });

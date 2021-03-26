@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const User = require('./User');
 const UserBlock = require('./UserBlock');
 const bcrypt = require('bcrypt');
@@ -9,6 +11,7 @@ const EmailException = require('../email/EmailException');
 const InvalidTokenException = require('./InvalidTokenException');
 const UserNotFoundException = require('./UserNotFoundException');
 const { randomString } = require('../shared/generator');
+const { putPublicS3 } = require('../shared/aws');
 const saltRounds = 10;
 
 const save = async (body) => {
@@ -282,20 +285,34 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
   return result;
 };
 
-const updateUser = async (id, updateBody) => {
+const updateUser = async (id, updateBody, image = null) => {
   const user = await User.findOne({ where: { id: id } });
   user.username = updateBody.username || user.username;
   user.dob = updateBody.dob || user.dob;
   user.fullname = updateBody.fullname || user.fullname;
   user.phonenumber = updateBody.phonenumber || user.phonenumber;
   user.gender = updateBody.gender || user.gender;
-  user.image = updateBody.image;
   user.complete = 1;
-  // eslint-disable-next-line no-prototype-builtins
-  if (updateBody.hasOwnProperty('public')) {
+  if ('public' in updateBody) {
     user.public = updateBody.public;
   }
+
+  if (image) {
+    const file = `uploads/${image}`;
+    const fileStream = fs.createReadStream(file);
+    const key = path.basename(file);
+    let location = image;
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
+      location = await putPublicS3(`profile/${id}/${key}`, fileStream);
+    }
+    fs.unlinkSync(file);
+    user.image = location;
+  }
+
   await user.save();
+  const result = user.toJSON();
+  delete result.password;
+  return result;
 };
 
 const deleteUser = async (id) => {
@@ -365,7 +382,7 @@ const findBlockedUsers = async (userId, page = 0, size = 10, search = '') => {
 const isBlocked = async (userId, blockedUserId) => {
   const user = await User.findByPk(userId);
   if (user) {
-    const count = await user.countUserblocks({
+    const count = await user.countUserBlocks({
       where: {
         userId,
         blockedUserId,

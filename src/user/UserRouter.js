@@ -10,6 +10,8 @@ const ForbiddenException = require('../error/ForbiddenException');
 const tokenAuthentication = require('../middleware/tokenAuthentication');
 const tokenAuthOrNot = require('../middleware/tokenAuthOrNot');
 
+const { upload } = require('../shared/upload');
+
 router.post(
   '/api/1.0/users',
   check('username')
@@ -194,6 +196,7 @@ router.put(
 
 router.put(
   '/api/1.0/users/:id',
+  upload.single('image'),
   check('id').isInt().withMessage('id should be integer').bail().toInt(),
   check('username')
     .if(body('username').exists())
@@ -222,10 +225,6 @@ router.put(
         if (!pn.isValid() || !pn.isPossible()) {
           throw new Error('phonenumber is invalid');
         }
-        const user = await UserService.findByPhonenumber(pn.getNumber('significant'));
-        if (user) {
-          throw new Error('phonenumber is already in use');
-        }
       } catch (err) {
         throw new Error('phonenumber is invalid');
       }
@@ -238,19 +237,33 @@ router.put(
   tokenAuthentication,
   validateRequest,
   async (req, res, next) => {
-    const authenticatedUser = req.authenticatedUser;
+    try {
+      const userId = req.params.id;
+      const authenticatedUser = req.authenticatedUser;
 
-    if (authenticatedUser.id !== req.params.id) {
-      return next(new ForbiddenException('Not authorized to edit user'));
-    }
-    if (req.body.phonenumber) {
-      const user = await UserService.findByPhonenumber(req.body.phonenumber);
-      if (user.id !== authenticatedUser.id) {
-        throw new Error('phonenumber is already in use');
+      if (authenticatedUser.id !== userId) {
+        return next(new ForbiddenException('Not authorized to edit user'));
       }
+      if (req.body.phonenumber) {
+        const user = await UserService.findByPhonenumber(req.body.phonenumber);
+        if (user) {
+          if (user.id !== authenticatedUser.id) {
+            throw new Error('phonenumber is already in use');
+          }
+        }
+      }
+
+      const reqBody = req.body;
+      if (req.file) {
+        const user = await UserService.updateUser(userId, reqBody, req.file.filename);
+        res.send(user);
+      } else {
+        const user = await UserService.updateUser(userId, reqBody);
+        res.send(user);
+      }
+    } catch (err) {
+      next(err);
     }
-    await UserService.updateUser(req.params.id, req.body);
-    return res.send({ message: 'updated' });
   }
 );
 
