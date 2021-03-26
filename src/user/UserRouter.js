@@ -234,6 +234,7 @@ router.put(
       const pn = new PhoneNumberHelper(phonenumber, 'US');
       return pn.getNumber('significant');
     }),
+  check('public').if(body('public').exists()).isBoolean().withMessage('public field should be boolean').bail(),
   tokenAuthentication,
   validateRequest,
   async (req, res, next) => {
@@ -265,6 +266,132 @@ router.delete(
     }
     await UserService.deleteUser(req.params.id);
     return res.send();
+  }
+);
+
+// get blocked users
+router.get('/api/1.0/userblocks', pagination, tokenAuthentication, async (req, res, next) => {
+  try {
+    const { page, size } = req.pagination;
+    const authenticatedUser = req.authenticatedUser;
+    const search = req.query.search;
+    const result = await UserService.findBlockedUsers(authenticatedUser.id, page, size, search);
+    return res.send(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post(
+  '/api/1.0/userblocks/:userId',
+  check('userId').isInt().withMessage('userId should be integer').bail().toInt(),
+  validateRequest,
+  tokenAuthentication,
+  async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      const authenticatedUser = req.authenticatedUser;
+      if (authenticatedUser.id === userId) {
+        throw new Error('can not block yourself');
+      }
+      const user = await UserService.getUser(userId);
+      if (!user) {
+        throw new Error('can not find user');
+      }
+      const blocked = await UserService.isBlocked(authenticatedUser.id, userId);
+      if (blocked) {
+        throw new Error('already blocked');
+      }
+      await UserService.blockUser(authenticatedUser.id, userId);
+      const result = await UserService.getUser(userId, authenticatedUser);
+      return res.send(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.delete(
+  '/api/1.0/userblocks/:userId',
+  check('userId').isInt().withMessage('userId should be integer').bail().toInt(),
+  validateRequest,
+  tokenAuthentication,
+  async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      const authenticatedUser = req.authenticatedUser;
+      const isBlocked = await UserService.isBlocked(authenticatedUser.id, userId);
+      if (!isBlocked) {
+        throw new Error('not blocked');
+      }
+      await UserService.unblockUser(authenticatedUser.id, userId);
+      const user = await UserService.getUser(userId, authenticatedUser);
+      return res.send(user);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.post(
+  '/api/1.0/password/reset',
+  check('email')
+    .notEmpty()
+    .withMessage('Email can not be null')
+    .bail()
+    .isEmail()
+    .withMessage('Email is not valid')
+    .bail()
+    .custom(async (email) => {
+      const user = await UserService.findByEmail(email);
+      if (!user) {
+        throw new Error('email is not registered');
+      }
+    }),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const user = await UserService.sendResetPassword(req.body.email);
+      const result = user.toJSON();
+      delete result.password;
+      delete result.activationToken;
+      delete result.isFriendRequestSent;
+      delete result.isFriend;
+      delete result.isFriendRequestReceived;
+      res.send(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.put(
+  '/api/1.0/password/reset',
+  check('token').notEmpty().withMessage('token is required').bail(),
+  check('password')
+    .notEmpty()
+    .withMessage('Password cannot be null')
+    .bail()
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters')
+    .bail()
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/)
+    .withMessage('Password must have at least one lowercase letter, one uppercase, and 1 number'),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const { token, password } = req.body;
+      const user = await UserService.resetPassword(token, password);
+      const result = user.toJSON();
+      delete result.password;
+      delete result.activationToken;
+      delete result.isFriendRequestSent;
+      delete result.isFriend;
+      delete result.isFriendRequestReceived;
+      res.send(result);
+    } catch (err) {
+      next(err);
+    }
   }
 );
 

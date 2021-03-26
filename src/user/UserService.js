@@ -1,4 +1,5 @@
 const User = require('./User');
+const UserBlock = require('./UserBlock');
 const bcrypt = require('bcrypt');
 const EmailService = require('../email/EmailService');
 const sequelize = require('../config/database');
@@ -8,10 +9,10 @@ const EmailException = require('../email/EmailException');
 const InvalidTokenException = require('./InvalidTokenException');
 const UserNotFoundException = require('./UserNotFoundException');
 const { randomString } = require('../shared/generator');
+const saltRounds = 10;
 
 const save = async (body) => {
   const { fullname, username, email, password, dob, phonenumber, gender } = body;
-  const saltRounds = 10;
   const hash = await bcrypt.hash(password, saltRounds);
   const user = {
     fullname,
@@ -185,13 +186,16 @@ const getUsers = async (page, size, authenticatedUser, search = '') => {
     offset: size * page,
   });
 
-  const users = usersWithCount.rows.map((user) => {
-    const result = user.toJSON();
-    delete result.Friends;
-    delete result.Requestees;
-    delete result.Requesters;
-    return result;
-  });
+  const users = [];
+  const rows = usersWithCount.rows;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i].toJSON();
+    delete row.Friends;
+    delete row.Requestees;
+    delete row.Requesters;
+    row.isBlocked = await isBlocked(authenticatedUser ? authenticatedUser.id : 0, row.id);
+    users.push(row);
+  }
 
   return {
     content: users,
@@ -211,6 +215,8 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
     'phonenumber',
     'gender',
     'isFriend',
+    'public',
+    'complete',
     'isFriendRequestSent',
     'isFriendRequestReceived',
   ];
@@ -259,6 +265,7 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
   const favoriteCount = await user.countJitFavorites();
   const replyCount = await user.countJitReplies();
   const jitScore = 5 * replyCount;
+  const blocked = await isBlocked(authenticatedUser ? authenticatedUser.id : 0, id);
 
   const result = user.toJSON();
   delete result.Friends;
@@ -270,6 +277,7 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
   result.favoriteCount = favoriteCount;
   result.replyCount = replyCount;
   result.jitScore = jitScore;
+  result.isBlocked = blocked;
 
   return result;
 };
@@ -282,6 +290,11 @@ const updateUser = async (id, updateBody) => {
   user.phonenumber = updateBody.phonenumber || user.phonenumber;
   user.gender = updateBody.gender || user.gender;
   user.image = updateBody.image;
+  user.complete = 1;
+  // eslint-disable-next-line no-prototype-builtins
+  if (updateBody.hasOwnProperty('public')) {
+    user.public = updateBody.public;
+  }
   await user.save();
 };
 
@@ -291,10 +304,105 @@ const deleteUser = async (id) => {
 
 const updatePassword = async (id, password) => {
   const user = await User.findOne({ where: { id: id } });
-  const saltRounds = 10;
   const hash = await bcrypt.hash(password, saltRounds);
   user.password = hash;
   await user.save();
+};
+
+const blockUser = async (userId, blockedUserId) => {
+  const userBlock = await UserBlock.create({
+    userId,
+    blockedUserId,
+  });
+  return userBlock;
+};
+
+const unblockUser = async (userId, blockedUserId) => {
+  await UserBlock.destroy({
+    where: {
+      userId,
+      blockedUserId,
+    },
+  });
+};
+
+const findBlockedUsers = async (userId, page = 0, size = 10, search = '') => {
+  const users = UserBlock.findAndCountAll({
+    where: {
+      userId,
+    },
+    include: {
+      model: User,
+      as: 'user',
+      attributes: ['id', 'fullname', 'username', 'dob', 'email'],
+      where: {
+        [Op.or]: [
+          {
+            username: {
+              [Op.like]: `%${search}%`,
+            },
+          },
+          {
+            fullname: {
+              [Op.like]: `%${search}%`,
+            },
+          },
+          {
+            email: {
+              [Op.like]: `%${search}%`,
+            },
+          },
+        ],
+      },
+    },
+    page: page * size,
+    limit: size,
+  });
+
+  return users;
+};
+
+const isBlocked = async (userId, blockedUserId) => {
+  const user = await User.findByPk(userId);
+  if (user) {
+    const count = await user.countUserblocks({
+      where: {
+        userId,
+        blockedUserId,
+      },
+    });
+    return !!count;
+  }
+  return false;
+};
+
+const sendResetPassword = async (email) => {
+  try {
+    const activationToken = randomString(16);
+    const user = await findByEmail(email);
+    user.activationToken = activationToken;
+    await user.save();
+    await EmailService.sendPasswordReset(email, user.activationToken);
+    return user;
+  } catch (err) {
+    throw new EmailException();
+  }
+};
+
+const resetPassword = async (token, password) => {
+  const user = await User.findOne({
+    where: {
+      activationToken: token,
+    },
+  });
+  if (!user) {
+    throw new Error('user not found');
+  }
+  const hash = await bcrypt.hash(password, saltRounds);
+  user.activationToken = '';
+  user.password = hash;
+  user.save();
+  return user;
 };
 
 module.exports = {
@@ -308,4 +416,10 @@ module.exports = {
   updateUser,
   deleteUser,
   updatePassword,
+  isBlocked,
+  blockUser,
+  unblockUser,
+  findBlockedUsers,
+  sendResetPassword,
+  resetPassword,
 };

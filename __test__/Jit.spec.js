@@ -69,6 +69,16 @@ const getJits = async (options = {}, isPrivate = false) => {
   return agent.send();
 };
 
+const getJit = async (jitId, options = {}) => {
+  let url = `/api/1.0/jits/${jitId}`;
+  const agent = request(app).get(url);
+
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.send();
+};
+
 const replyJit = async (jitId, content, options = {}) => {
   const agent = request(app).post(`/api/1.0/jits/reply/${jitId}`);
 
@@ -216,6 +226,29 @@ describe('Get Jits', () => {
     expect(getResponse.body.count).toBe(1);
     expect(getResponse.body.jits.length).toBe(1);
     expect(getResponse.status).toBe(200);
+  });
+});
+
+describe('Get Jit by id', () => {
+  it('returns forbidden when request is sent unauthorized', async () => {
+    const response = await getJit(1);
+    expect(response.status).toBe(403);
+  });
+  it('get jit by id', async () => {
+    await addUser();
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const response = await postJit('test', null, { token });
+    expect(response.status).toBe(200);
+    const jitResponse = await getJit(response.body.id, { token });
+    expect(jitResponse.status).toBe(200);
+    expect(jitResponse.body.id).toBe(response.body.id);
+  });
+  it('can not find jit', async () => {
+    await addUser();
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const jitResponse = await getJit(1, { token });
+    expect(jitResponse.status).toBe(400);
+    expect(jitResponse.body.message).toBe('can not find jit');
   });
 });
 
