@@ -92,6 +92,87 @@ router.get('/api/1.0/users/token/:token', async (req, res, next) => {
   }
 });
 
+router.get('/api/1.0/users/images', tokenAuthentication, async (req, res, next) => {
+  try {
+    const authenticatedUser = req.authenticatedUser;
+    const userId = authenticatedUser.id;
+    const userImage = await UserService.getImages(userId);
+    res.send(userImage);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/api/1.0/users/images', tokenAuthentication, upload.single('image'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      throw new Error('image is required');
+    }
+    const authenticatedUser = req.authenticatedUser;
+    const userId = authenticatedUser.id;
+    const userImage = await UserService.postImage(userId, req.file.filename);
+    res.send(userImage);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put(
+  '/api/1.0/users/images/:id',
+  check('id').isInt().withMessage('id should be integer').bail().toInt(),
+  validateRequest,
+  tokenAuthentication,
+  upload.single('image'),
+  async (req, res, next) => {
+    try {
+      const authenticatedUser = req.authenticatedUser;
+      const userId = authenticatedUser.id;
+      const id = req.params.id;
+      const image = await UserService.findImageById(id);
+      if (!image) {
+        throw new Error('can not find image');
+      }
+      if (image.userId !== userId) {
+        throw new Error('can not edit image');
+      }
+      if (!req.file) {
+        throw new Error('image is required');
+      }
+
+      const userImage = await UserService.updateImage(id, userId, req.file.filename);
+      res.send(userImage);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.delete(
+  '/api/1.0/users/images/:id',
+  check('id').isInt().withMessage('id should be integer').bail().toInt(),
+  validateRequest,
+  tokenAuthentication,
+  async (req, res, next) => {
+    try {
+      const authenticatedUser = req.authenticatedUser;
+      const userId = authenticatedUser.id;
+      const id = req.params.id;
+      const image = await UserService.findImageById(id);
+      if (!image) {
+        throw new Error('can not find image');
+      }
+      if (image.userId !== userId) {
+        throw new Error('can not delete image');
+      }
+
+      await UserService.removeImage(id);
+      return res.status(200).send({ message: 'removed image' });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 router.get('/api/1.0/users', pagination, tokenAuthOrNot, async (req, res) => {
   const authenticatedUser = req.authenticatedUser;
   const { page, size } = req.pagination;

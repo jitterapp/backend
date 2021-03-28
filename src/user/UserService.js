@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const User = require('./User');
 const UserBlock = require('./UserBlock');
+const UserImage = require('./UserImage');
 const bcrypt = require('bcrypt');
 const EmailService = require('../email/EmailService');
 const sequelize = require('../config/database');
@@ -422,6 +423,64 @@ const resetPassword = async (token, password) => {
   return user;
 };
 
+const getImages = async (userId) => {
+  const images = await UserImage.findAll({
+    where: {
+      userId,
+    },
+  });
+  return images;
+};
+
+const postImage = async (userId, image) => {
+  const file = `uploads/${image}`;
+  const fileStream = fs.createReadStream(file);
+  const key = path.basename(file);
+  let location = image;
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
+    location = await putPublicS3(`profile/${userId}/${key}`, fileStream);
+  }
+  fs.unlinkSync(file);
+
+  const userImage = await UserImage.create({
+    userId,
+    image: location,
+  });
+
+  return userImage;
+};
+
+const updateImage = async (id, userId, image) => {
+  const file = `uploads/${image}`;
+  const fileStream = fs.createReadStream(file);
+  const key = path.basename(file);
+  let location = image;
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
+    location = await putPublicS3(`profile/${userId}/${key}`, fileStream);
+  }
+  fs.unlinkSync(file);
+
+  const userImage = await UserImage.findOne({ where: { id } });
+  userImage.image = location;
+  await userImage.save();
+
+  return userImage;
+};
+
+const removeImage = async (id) => {
+  await UserImage.destroy({
+    where: {
+      id,
+    },
+  });
+  return true;
+};
+
+const findImageById = async (id) => {
+  const userImage = await UserImage.findByPk(id);
+  return userImage;
+};
+
 module.exports = {
   save,
   findByEmail,
@@ -439,4 +498,9 @@ module.exports = {
   findBlockedUsers,
   sendResetPassword,
   resetPassword,
+  postImage,
+  getImages,
+  removeImage,
+  updateImage,
+  findImageById,
 };

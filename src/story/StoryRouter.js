@@ -40,9 +40,7 @@ router.get(
 router.post('/api/1.0/stories', upload.single('resource'), tokenAuthentication, async (req, res, next) => {
   try {
     if (!req.file) {
-      return res
-        .status(400)
-        .send({ path: req.originalUrl, timestamp: new Date().getTime(), message: 'resource is required' });
+      throw new Error('resource is required');
     }
 
     const authenticatedUser = req.authenticatedUser;
