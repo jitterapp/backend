@@ -13,7 +13,7 @@ const sendAccountActivation = async (email, token) => {
       <b>Please click link below to activate your account</b>
     </div>
     <div>
-      <a href="${apiBase}/api/1.0/users/token/${token}">Activate</a>
+      <a href="${apiBase}/accountActivate.html?token=${token}">Activate</a>
     </div>
     `,
   });

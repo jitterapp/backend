@@ -95,6 +95,11 @@ const findByPhoneNumbers = async (authenticatedUser, phonenumbers) => {
         required: false,
         attributes: ['id'],
       },
+      {
+        model: UserImage,
+        required: false,
+        attributes: ['image'],
+      },
     ],
   });
 
@@ -185,6 +190,11 @@ const getUsers = async (page, size, authenticatedUser, search = '') => {
         required: false,
         attributes: ['id'],
       },
+      {
+        model: UserImage,
+        required: false,
+        attributes: ['image'],
+      },
     ],
     limit: size,
     offset: size * page,
@@ -257,6 +267,11 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
         },
         required: false,
         attributes: ['id'],
+      },
+      {
+        model: UserImage,
+        required: false,
+        attributes: ['image'],
       },
     ],
   });

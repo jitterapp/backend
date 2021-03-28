@@ -91,6 +91,7 @@ describe('Listing users', () => {
       'phonenumber',
       'gender',
       'image',
+      'userImages',
       'isBlocked',
     ]);
   });
@@ -213,6 +214,7 @@ describe('Get user', () => {
       'gender',
       'public',
       'complete',
+      'userImages',
       'friendCount',
       'likeCount',
       'favoriteCount',
@@ -276,6 +278,7 @@ describe('Get me', () => {
       'gender',
       'public',
       'complete',
+      'userImages',
       'friendCount',
       'likeCount',
       'favoriteCount',
