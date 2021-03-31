@@ -13,6 +13,7 @@ const getActivities = async (userId, page = 0, size = 10) => {
     },
     offset: page * size,
     limit: size,
+    order: [['createdAt', 'DESC']],
   });
   return result;
 };
