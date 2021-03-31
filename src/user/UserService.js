@@ -31,7 +31,7 @@ const save = async (body) => {
   const transaction = await sequelize.transaction();
   await User.create(user, { transaction });
   try {
-    await EmailService.sendAccountActivation(email, user.activationToken);
+    // await EmailService.sendAccountActivation(email, user.activationToken);
     await transaction.commit();
   } catch (err) {
     await transaction.rollback();
