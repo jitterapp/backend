@@ -9,12 +9,13 @@ Activity.init(
   {
     type: {
       type: Sequelize.TINYINT,
-      // - Mentioned to jit - 1
-      // - Mentioned to story - 2
+      // - Replied to jit - 1
+      // - Replied to story - 2
       // - Friend request received - 3
       // - Friend request accepted - 4
       // - Friend request rejected - 5
       // - Unfriended - 6
+      // - Direct Messaging - 7
     },
     description: {
       type: Sequelize.TEXT,
