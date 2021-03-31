@@ -9,7 +9,7 @@ const getActivities = async (userId, page = 0, size = 10) => {
     include: {
       model: User,
       as: 'user',
-      attributes: ['id', 'fullname', 'username', 'dob', 'email'],
+      attributes: ['id', 'fullname', 'username', 'dob', 'email', 'image'],
     },
     offset: page * size,
     limit: size,
