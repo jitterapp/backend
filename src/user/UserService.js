@@ -231,6 +231,7 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
     'isFriend',
     'public',
     'complete',
+    'image',
     'isFriendRequestSent',
     'isFriendRequestReceived',
   ];
