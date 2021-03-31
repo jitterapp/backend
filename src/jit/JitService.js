@@ -134,6 +134,7 @@ const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous =
     include,
     limit: size,
     offset: size * page,
+    order: [['createdAt', 'DESC']],
   });
 
   const result = await proceedJitsWithCount(jitsWithCount, authenticatedUser);

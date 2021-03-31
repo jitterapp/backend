@@ -86,6 +86,7 @@ const findStories = async (page, size, search = null) => {
     include,
     limit: size,
     offset: size * page,
+    order: [['createdAt', 'DESC']],
   });
 
   return storiesWithCount;
