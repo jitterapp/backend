@@ -65,7 +65,16 @@ const postJit = async (userId, content, friendIds = [], ispublic = true, anonymo
   return jit;
 };
 
-const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous = 0, userId = 0, search = null) => {
+const findJits = async (
+  authenticatedUser,
+  page,
+  size,
+  ispublic = 0,
+  anonymous = 0,
+  userId = 0,
+  search = null,
+  creatorId = 0
+) => {
   const where = {};
   if (ispublic) {
     where.ispublic = ispublic;
@@ -95,6 +104,15 @@ const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous =
         },
       ],
     };
+  }
+  if (creatorId) {
+    if (userWhere) {
+      userWhere.id = creatorId;
+    } else {
+      userWhere = {
+        id: creatorId,
+      };
+    }
   }
 
   const includeUser = {

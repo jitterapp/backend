@@ -69,6 +69,78 @@ router.get('/api/1.0/jits', pagination, tokenAuthentication, async (req, res, ne
   }
 });
 
+router.get(
+  '/api/1.0/jits/all/:userId',
+  check('userId').isInt().withMessage('userId should be integer').bail().toInt(),
+  pagination,
+  tokenAuthentication,
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      const user = await UserService.getUser(userId);
+      if (!user) {
+        throw new Error('can not find user');
+      }
+      const authenticatedUser = req.authenticatedUser;
+      const { page, size } = req.pagination;
+      const { search } = req.query;
+      const jits = await JitService.findJits(authenticatedUser, page, size, false, false, 0, search, userId);
+      res.send(jits);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
+  '/api/1.0/jits/public/:userId',
+  check('userId').isInt().withMessage('userId should be integer').bail().toInt(),
+  pagination,
+  tokenAuthentication,
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      const user = await UserService.getUser(userId);
+      if (!user) {
+        throw new Error('can not find user');
+      }
+      const authenticatedUser = req.authenticatedUser;
+      const { page, size } = req.pagination;
+      const { search } = req.query;
+      const jits = await JitService.findJits(authenticatedUser, page, size, true, false, 0, search, userId);
+      res.send(jits);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
+  '/api/1.0/jits/private/:userId',
+  check('userId').isInt().withMessage('userId should be integer').bail().toInt(),
+  pagination,
+  tokenAuthentication,
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      const user = await UserService.getUser(userId);
+      if (!user) {
+        throw new Error('can not find user');
+      }
+      const authenticatedUser = req.authenticatedUser;
+      const { page, size } = req.pagination;
+      const { search } = req.query;
+      const jits = await JitService.findJits(authenticatedUser, page, size, false, true, 0, search, userId);
+      res.send(jits);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 router.get('/api/1.0/jits/liked', pagination, tokenAuthentication, async (req, res, next) => {
   try {
     const authenticatedUser = req.authenticatedUser;
