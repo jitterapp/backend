@@ -8,6 +8,7 @@ const FriendRouter = require('./friend/FriendRouter');
 const JitRouter = require('./jit/JitRouter');
 const StoryRouter = require('./story/StoryRouter');
 const ActivityRouter = require('./activity/ActivityRouter');
+const OneSignalRouter = require('./onesignal/OneSignalRouter');
 
 app.use(express.static('public'));
 // app.use(express.json());
@@ -20,6 +21,7 @@ app.use(FriendRouter);
 app.use(JitRouter);
 app.use(StoryRouter);
 app.use(ActivityRouter);
+app.use(OneSignalRouter);
 
 app.use(errorHandler);
 

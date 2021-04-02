@@ -51,7 +51,7 @@ const postStory = async (file = '', options = {}) => {
   return agent.attach('resource', file, 'story.png');
 };
 
-describe('Story', () => {
+describe('Post Story', () => {
   it('returns forbidden when request is sent unauthorized', async () => {
     const response = await postStory();
     expect(response.status).toBe(403);
