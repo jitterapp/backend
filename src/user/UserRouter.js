@@ -376,6 +376,30 @@ router.get('/api/1.0/userblocks', pagination, tokenAuthentication, async (req, r
   }
 });
 
+router.post('/api/1.0/userblocks/anonymous', tokenAuthentication, async (req, res, next) => {
+  try {
+    const authenticatedUser = req.authenticatedUser;
+    const userId = authenticatedUser.id;
+    await UserService.blockAnonymous(userId);
+    const result = await UserService.getUser(userId);
+    return res.send(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/api/1.0/userblocks/anonymous', tokenAuthentication, async (req, res, next) => {
+  try {
+    const authenticatedUser = req.authenticatedUser;
+    const userId = authenticatedUser.id;
+    await UserService.unBlockAnonymous(userId);
+    const result = await UserService.getUser(userId);
+    return res.send(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post(
   '/api/1.0/userblocks/:userId',
   check('userId').isInt().withMessage('userId should be integer').bail().toInt(),

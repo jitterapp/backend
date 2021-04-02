@@ -231,6 +231,7 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
     'isFriend',
     'public',
     'complete',
+    'blockAnonymous',
     'image',
     'isFriendRequestSent',
     'isFriendRequestReceived',
@@ -497,6 +498,20 @@ const findImageById = async (id) => {
   return userImage;
 };
 
+const blockAnonymous = async (userId) => {
+  const user = await User.findOne({ where: { id: userId } });
+  user.blockAnonymous = true;
+  await user.save();
+  return user;
+};
+
+const unBlockAnonymous = async (userId) => {
+  const user = await User.findOne({ where: { id: userId } });
+  user.blockAnonymous = false;
+  await user.save();
+  return user;
+};
+
 module.exports = {
   save,
   findByEmail,
@@ -519,4 +534,6 @@ module.exports = {
   removeImage,
   updateImage,
   findImageById,
+  blockAnonymous,
+  unBlockAnonymous,
 };

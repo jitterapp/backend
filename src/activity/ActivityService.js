@@ -38,34 +38,35 @@ const logActivity = async (type, userId, fromUserId, description = '', message =
     message,
   };
 
-  let messageToSend = message;
-  if (type === 1) {
-    // Replied to Jit
-    messageToSend = message;
-  } else if (type === 2) {
-    // Replied to Story
-    messageToSend = message;
-  } else if (type === 3) {
-    // Received friend Request
-    const user = await User.findByPk(fromUserId);
-    messageToSend = `${user.username} sent you friend request`;
-  } else if (type === 4) {
-    // Accepted friend Request
-    const user = await User.findByPk(fromUserId);
-    messageToSend = `${user.username} accepted your friend request`;
-  } else if (type === 5) {
-    // Rejected friend Request
-    const user = await User.findByPk(fromUserId);
-    messageToSend = `${user.username} rejected your friend request`;
-  } else if (type === 6) {
-    // Unfriend
-    const user = await User.findByPk(fromUserId);
-    messageToSend = `${user.username} removed you from friends`;
-  } else if (type === 7) {
-    messageToSend = message;
-  }
+  const fromUser = await User.findByPk(fromUserId);
+  if (fromUser) {
+    const user = fromUser.toJSON();
 
-  OneSignalService.sendNotification(userId, messageToSend, data);
+    let messageToSend = message;
+    if (type === 1) {
+      // Replied to Jit
+      messageToSend = message;
+    } else if (type === 2) {
+      // Replied to Story
+      messageToSend = message;
+    } else if (type === 3) {
+      // Received friend Request
+      messageToSend = `${user.username} sent you friend request`;
+    } else if (type === 4) {
+      // Accepted friend Request
+      messageToSend = `${user.username} accepted your friend request`;
+    } else if (type === 5) {
+      // Rejected friend Request
+      messageToSend = `${user.username} rejected your friend request`;
+    } else if (type === 6) {
+      // Unfriend
+      messageToSend = `${user.username} removed you from friends`;
+    } else if (type === 7) {
+      messageToSend = message;
+    }
+
+    OneSignalService.sendNotification(userId, messageToSend, data);
+  }
 
   return activity;
 };

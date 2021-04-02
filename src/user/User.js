@@ -57,6 +57,10 @@ User.init(
       type: Sequelize.BOOLEAN,
       defaultValue: false,
     },
+    blockAnonymous: {
+      type: Sequelize.BOOLEAN,
+      default: false,
+    },
     activationToken: {
       type: Sequelize.STRING,
     },
