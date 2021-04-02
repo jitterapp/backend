@@ -1,3 +1,6 @@
+const config = require('config');
+const https = require('https');
+const onesignalAppId = config.get('onsesignal_app_id');
 const OneSignal = require('./OneSignal');
 
 const getOnesignalUserIds = async (userId) => {
@@ -37,9 +40,38 @@ const removeByUserIdAndOneSignalUserId = async (userId, onesignalUserId) => {
   return result;
 };
 
+const sendNotification = async (userId, contents, data = [], title = 'Jitter') => {
+  const onesignalUserIds = await getOnesignalUserIds(userId);
+  const playerIds = onesignalUserIds.map((item) => item.onesignalUserId);
+  const headers = {
+    'Content-Type': 'application/json; charset=utf-8',
+  };
+  const options = {
+    host: 'onesignal.com',
+    port: 443,
+    path: '/api/v1/notifications',
+    method: 'POST',
+    headers: headers,
+  };
+  const message = {
+    app_id: onesignalAppId,
+    contents: { en: contents },
+    headings: {
+      en: title,
+    },
+    include_player_ids: playerIds,
+    data,
+  };
+
+  const req = https.request(options);
+  req.write(JSON.stringify(message));
+  req.end();
+};
+
 module.exports = {
   getOnesignalUserIds,
   registerOneSignalUserId,
   findOnesignalUserId,
   removeByUserIdAndOneSignalUserId,
+  sendNotification,
 };
