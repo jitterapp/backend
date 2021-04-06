@@ -44,6 +44,10 @@ router.post(
           if (user.blockAnonymous) {
             throw new Error('Anonymous Jit is blocked');
           }
+          const isBlocked = await UserService.isBlocked(friendIds[i], userId);
+          if (isBlocked) {
+            throw new Error('You are blocked to post anonymoust Jit');
+          }
         }
 
         for (let i = 0; i < friendIds.length; i++) {

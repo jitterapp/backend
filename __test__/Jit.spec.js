@@ -3,6 +3,7 @@ const app = require('../src/app');
 const User = require('../src/user/User');
 const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
+const UserBlock = require('../src/user/UserBlock');
 
 beforeAll(async () => {
   await sequelize.sync();
@@ -236,6 +237,18 @@ describe('Post Jit', () => {
     const response = await postJit('test', [otherUser.id], { token });
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Anonymous Jit is blocked');
+  });
+  it('fails to post private Jit to blocked user', async () => {
+    const user = await addUser();
+    const otherUser = await addUser({ ...friendUser });
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    await UserBlock.create({
+      userId: otherUser.id,
+      blockedUserId: user.id,
+    });
+    const response = await postJit('test', [otherUser.id], { token });
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('You are blocked to post anonymoust Jit');
   });
 });
 
