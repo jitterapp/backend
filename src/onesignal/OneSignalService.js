@@ -1,6 +1,5 @@
-const config = require('config');
 const https = require('https');
-const onesignalAppId = config.get('onsesignal_app_id');
+const onesignalAppId = process.env.ONESIGNAL_APP_ID;
 const OneSignal = require('./OneSignal');
 
 const getOnesignalUserIds = async (userId) => {

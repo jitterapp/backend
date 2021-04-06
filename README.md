@@ -28,6 +28,7 @@
 
 
 ### Setup
+Rename .env.example to .env and set environment variables
 
 #### Command to run in terminal to download dependencies
 ```console

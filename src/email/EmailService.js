@@ -1,5 +1,4 @@
-const config = require('config');
-const apiBase = config.get('api_base');
+const apiBase = process.env.API_BASE;
 const transporter = require('../config/emailTransporter');
 const nodemailer = require('nodemailer');
 
