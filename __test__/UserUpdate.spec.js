@@ -236,7 +236,7 @@ describe('User update', () => {
   });
   it('success to save profile image', async () => {
     const savedUser = await addUser();
-    const size = 1024;
+    const size = 100;
     mock({
       'profile.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},

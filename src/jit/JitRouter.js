@@ -40,6 +40,13 @@ router.post(
           throw new Error('can not jit to yrself');
         }
         for (let i = 0; i < friendIds.length; i++) {
+          const user = await UserService.getUser(friendIds[i]);
+          if (user.blockAnonymous) {
+            throw new Error('Anonymous Jit is blocked');
+          }
+        }
+
+        for (let i = 0; i < friendIds.length; i++) {
           const friendId = friendIds[i];
           const user = await UserService.getUser(friendId);
           if (!user) {

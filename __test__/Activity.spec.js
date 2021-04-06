@@ -213,7 +213,7 @@ describe('Log Activity', () => {
     const firstUser = await addUser();
     const user = await addUser(otherUser);
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024;
+    const size = 100;
     mock({
       'story.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},

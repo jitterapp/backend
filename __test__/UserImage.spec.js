@@ -109,7 +109,7 @@ describe('Post Image', () => {
   it('success to post image', async () => {
     const user = await addUser();
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024;
+    const size = 100;
     mock({
       'profile.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},
@@ -129,7 +129,7 @@ describe('Get Images', () => {
   it('success to get images', async () => {
     const user = await addUser();
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024;
+    const size = 100;
     mock({
       'profile.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},
@@ -160,7 +160,7 @@ describe('Delete Image', () => {
   it('fails to delete other user image', async () => {
     await addUser();
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024;
+    const size = 100;
     mock({
       'profile.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},
@@ -178,7 +178,7 @@ describe('Delete Image', () => {
   it('success to delete user image', async () => {
     await addUser();
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024;
+    const size = 100;
     mock({
       'profile.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},
@@ -204,7 +204,7 @@ describe('Update Image', () => {
   it('fails to update image', async () => {
     await addUser();
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024;
+    const size = 100;
     mock({
       'profile.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},
@@ -216,7 +216,7 @@ describe('Update Image', () => {
   it('fails to update other user image', async () => {
     await addUser();
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024;
+    const size = 100;
     mock({
       'profile.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},
@@ -254,7 +254,7 @@ describe('Update Image', () => {
   it('success to update user image', async () => {
     await addUser();
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024;
+    const size = 100;
     mock({
       'profile.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},

@@ -79,7 +79,7 @@ describe('Post Story', () => {
   it('success to post story', async () => {
     const user = await addUser();
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024;
+    const size = 100;
     mock({
       'story.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},

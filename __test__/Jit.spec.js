@@ -18,6 +18,7 @@ const activeUser = {
   email: 'user1@mail.com',
   password: 'P4ssword',
   inactive: false,
+  blockAnonymous: false,
 };
 const friendUser = {
   username: 'frienduser',
@@ -25,6 +26,7 @@ const friendUser = {
   email: 'friend@mail.com',
   password: 'P4ssword',
   inactive: false,
+  blockAnonymous: false,
 };
 
 const addUser = async (user = { ...activeUser }) => {
@@ -226,6 +228,14 @@ describe('Post Jit', () => {
     expect(response.body.content).toBe('test');
     expect(response.body.anonymous).toBe(true);
     expect(response.body.ispublic).toBe(false);
+  });
+  it('fails to post private Jit to anonymous blocked user', async () => {
+    await addUser();
+    const otherUser = await addUser({ ...friendUser, blockAnonymous: true });
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const response = await postJit('test', [otherUser.id], { token });
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Anonymous Jit is blocked');
   });
 });
 
