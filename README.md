@@ -10,7 +10,7 @@
 - sequelize (ORM for maintaining database functions for mysql DB)
 - mysql
 - cross-env (makes it so you can have a single command without worrying about setting or using the environment variable properly)
-- config (lets you define a set of default parameters, and extend them for different deployment environments)
+- dotenv (lets you define a set of environment variables)
 - express-validator (validations)
 - nodemailer (email verofication)
 - jest-watch-typeahead (helps with finding tests)
@@ -48,3 +48,35 @@ Rename .env.example to .env and set environment variables
   npm start
 ```
 #### Use a fake email generator like [this](https://temp-mail.org/en/) when testing smtp post on frontend. For backend we are using [this](https://ethereal.email/)
+
+### Sequelize
+#### Create Model
+```
+  node_modules/.bin/sequelize model:generate --name User --attributes firstName:string,lastName:string,email:string
+```
+#### Running Migrations
+```
+  node_modules/.bin/sequelize db:migrate
+```
+#### Undoing Migrations
+```
+  node_modules/.bin/sequelize db:migrate:undo
+```
+#### Creating Seed
+```
+  node_modules/.bin/sequelize seed:generate --name demo-user
+```
+#### Running Seeds
+```
+  node_modules/.bin/sequelize db:seed:all
+```
+#### Undoing Seeds
+```
+  node_modules/.bin/sequelize db:seed:undo
+```
+```
+  node_modules/.bin/sequelize db:seed:undo:all
+```
+
+### Demo User
+test@jitter.com / Password123

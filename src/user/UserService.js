@@ -1,11 +1,13 @@
 const fs = require('fs');
 const path = require('path');
-const User = require('./User');
-const UserBlock = require('./UserBlock');
-const UserImage = require('./UserImage');
+const db = require('../../db/models');
+const User = db.user;
+const UserBlock = db.userBlock;
+const UserImage = db.userImage;
+
 const bcrypt = require('bcrypt');
 const EmailService = require('../email/EmailService');
-const sequelize = require('../config/database');
+const sequelize = db.sequelize;
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const EmailException = require('../email/EmailException');

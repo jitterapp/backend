@@ -1,6 +1,7 @@
 const https = require('https');
 const onesignalAppId = process.env.ONESIGNAL_APP_ID;
-const OneSignal = require('./OneSignal');
+const db = require('../../db/models');
+const OneSignal = db.oneSignal;
 
 const getOnesignalUserIds = async (userId) => {
   const result = await OneSignal.findAll({

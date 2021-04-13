@@ -1,8 +1,9 @@
 const request = require('supertest');
 const mock = require('mock-fs');
 const app = require('../src/app');
-const User = require('../src/user/User');
-const sequelize = require('../src/config/database');
+const db = require('../db/models');
+const sequelize = db.sequelize;
+const User = db.user;
 const bcryt = require('bcrypt');
 const { existsSync } = require('fs');
 

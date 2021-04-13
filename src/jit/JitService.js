@@ -1,11 +1,12 @@
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const User = require('../user/User');
-const Jit = require('./Jit');
-const JitReply = require('./JitReply');
-const JitLike = require('./JitLike');
-const JitFavorite = require('./JitFavorite');
-const JitPrivate = require('./JitPrivate');
+const db = require('../../db/models');
+const User = db.user;
+const Jit = db.jit;
+const JitReply = db.jitReply;
+const JitLike = db.jitLike;
+const JitFavorite = db.jitFavorite;
+const JitPrivate = db.jitPrivate;
 
 const proceedJitsWithCount = async (jitsWithCount, authenticatedUser) => {
   const jits = [];
@@ -49,12 +50,11 @@ const proceedJitsWithCount = async (jitsWithCount, authenticatedUser) => {
 
 const postJit = async (userId, content, friendIds = [], ispublic = true, anonymous = false) => {
   const jit = await Jit.create({
+    userId,
     content,
     ispublic,
     anonymous,
   });
-  const user = await User.findByPk(userId);
-  user.addJit(jit);
 
   if (anonymous && friendIds) {
     friendIds.map((friendId) => {

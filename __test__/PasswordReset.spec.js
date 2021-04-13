@@ -1,7 +1,8 @@
 const request = require('supertest');
 const app = require('../src/app');
-const User = require('../src/user/User');
-const sequelize = require('../src/config/database');
+const db = require('../db/models');
+const sequelize = db.sequelize;
+const User = db.user;
 const SMTPServer = require('smtp-server').SMTPServer;
 const bcryt = require('bcrypt');
 

@@ -1,8 +1,9 @@
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const User = require('../user/User');
-const Friend = require('./Friend');
-const FriendRequest = require('./FriendRequest');
+const db = require('../../db/models');
+const Friend = db.friend;
+const FriendRequest = db.friendRequest;
+const User = db.user;
 
 const friendRequest = async (userId, friendId) => {
   const user = await User.findByPk(userId);

@@ -2,10 +2,11 @@ const request = require('supertest');
 const mock = require('mock-fs');
 const { existsSync } = require('fs');
 const app = require('../src/app');
-const User = require('../src/user/User');
-const Jit = require('../src/jit/Jit');
-const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
+const db = require('../db/models');
+const sequelize = db.sequelize;
+const User = db.user;
+const Jit = db.jit;
 
 beforeAll(async () => {
   await sequelize.sync();

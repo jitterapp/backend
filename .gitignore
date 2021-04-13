@@ -32,3 +32,5 @@ temp_resources
 config/development.json
 
 uploads
+
+test_db

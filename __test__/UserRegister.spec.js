@@ -1,8 +1,9 @@
 const request = require('supertest');
 const app = require('../src/app');
-const User = require('../src/user/User');
-const sequelize = require('../src/config/database');
 const SMTPServer = require('smtp-server').SMTPServer;
+const db = require('../db/models');
+const sequelize = db.sequelize;
+const User = db.user;
 
 let lastMail, server;
 let simulateSMTPFailure = false;

@@ -1,5 +1,6 @@
+const db = require('../../db/models');
+const Token = db.token;
 const { randomString } = require('../shared/generator');
-const Token = require('./Token');
 const Sequelize = require('sequelize');
 
 const createToken = async (user) => {

@@ -1,9 +1,11 @@
 const request = require('supertest');
 const app = require('../src/app');
-const User = require('../src/user/User');
-const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
-const UserBlock = require('../src/user/UserBlock');
+const db = require('../db/models');
+const sequelize = db.sequelize;
+const User = db.user;
+const UserBlock = db.userBlock;
+const Jit = db.jit;
 
 beforeAll(async () => {
   await sequelize.sync();
@@ -11,6 +13,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await User.destroy({ truncate: { cascade: true } }); //clean user table before each test
+  await Jit.destroy({ truncate: { cascade: true } });
 });
 
 const activeUser = {

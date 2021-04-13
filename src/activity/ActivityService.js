@@ -1,5 +1,6 @@
-const Activity = require('./Activity');
-const User = require('../user/User');
+const db = require('../../db/models');
+const User = db.user;
+const Activity = db.activity;
 const OneSignalService = require('../onesignal/OneSignalService');
 
 const getActivities = async (userId, page = 0, size = 10) => {
