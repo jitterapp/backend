@@ -1,3 +1,6 @@
+const { performMigrationAndSeeders } = require('./src/shared/umzug');
+performMigrationAndSeeders();
+
 const app = require('./src/app');
 const { listBucket } = require('./src/shared/aws');
 

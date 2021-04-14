@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const AWS = require('aws-sdk');
 
 //AWS S3 for Images
@@ -45,7 +46,8 @@ const listBucket = (bucket = BUCKET_NAME) => {
       console.log('Error', err);
       createBucket();
     } else {
-      console.log('Success', data);
+      // console.log('Success', data);
+      console.log('Success to list bucket');
     }
   });
 };
