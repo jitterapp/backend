@@ -1,8 +1,9 @@
 const request = require('supertest');
 const mock = require('mock-fs');
 const app = require('../src/app');
-const User = require('../src/user/User');
-const sequelize = require('../src/config/database');
+const db = require('../db/models');
+const sequelize = db.sequelize;
+const User = db.user;
 const bcryt = require('bcrypt');
 const { existsSync } = require('fs');
 
@@ -51,7 +52,7 @@ const postStory = async (file = '', options = {}) => {
   return agent.attach('resource', file, 'story.png');
 };
 
-describe('Story', () => {
+describe('Post Story', () => {
   it('returns forbidden when request is sent unauthorized', async () => {
     const response = await postStory();
     expect(response.status).toBe(403);
@@ -79,7 +80,7 @@ describe('Story', () => {
   it('success to post story', async () => {
     const user = await addUser();
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
-    const size = 1024;
+    const size = 100;
     mock({
       'story.png': Buffer.from('a '.repeat(size).split(' ')),
       uploads: {},

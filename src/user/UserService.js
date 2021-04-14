@@ -1,14 +1,20 @@
-const User = require('./User');
-const UserBlock = require('./UserBlock');
+const fs = require('fs');
+const path = require('path');
+const db = require('../../db/models');
+const User = db.user;
+const UserBlock = db.userBlock;
+const UserImage = db.userImage;
+
 const bcrypt = require('bcrypt');
 const EmailService = require('../email/EmailService');
-const sequelize = require('../config/database');
+const sequelize = db.sequelize;
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const EmailException = require('../email/EmailException');
 const InvalidTokenException = require('./InvalidTokenException');
 const UserNotFoundException = require('./UserNotFoundException');
 const { randomString } = require('../shared/generator');
+const { putPublicS3 } = require('../shared/aws');
 const saltRounds = 10;
 
 const save = async (body) => {
@@ -90,6 +96,11 @@ const findByPhoneNumbers = async (authenticatedUser, phonenumbers) => {
         },
         required: false,
         attributes: ['id'],
+      },
+      {
+        model: UserImage,
+        required: false,
+        attributes: ['image'],
       },
     ],
   });
@@ -181,6 +192,11 @@ const getUsers = async (page, size, authenticatedUser, search = '') => {
         required: false,
         attributes: ['id'],
       },
+      {
+        model: UserImage,
+        required: false,
+        attributes: ['image'],
+      },
     ],
     limit: size,
     offset: size * page,
@@ -217,6 +233,8 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
     'isFriend',
     'public',
     'complete',
+    'blockAnonymous',
+    'image',
     'isFriendRequestSent',
     'isFriendRequestReceived',
   ];
@@ -254,6 +272,11 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
         required: false,
         attributes: ['id'],
       },
+      {
+        model: UserImage,
+        required: false,
+        attributes: ['image'],
+      },
     ],
   });
   if (!user) {
@@ -282,20 +305,34 @@ const getUser = async (id, authenticatedUser = null, includePassword = false) =>
   return result;
 };
 
-const updateUser = async (id, updateBody) => {
+const updateUser = async (id, updateBody, image = null) => {
   const user = await User.findOne({ where: { id: id } });
   user.username = updateBody.username || user.username;
   user.dob = updateBody.dob || user.dob;
   user.fullname = updateBody.fullname || user.fullname;
   user.phonenumber = updateBody.phonenumber || user.phonenumber;
   user.gender = updateBody.gender || user.gender;
-  user.image = updateBody.image;
   user.complete = 1;
-  // eslint-disable-next-line no-prototype-builtins
-  if (updateBody.hasOwnProperty('public')) {
+  if ('public' in updateBody) {
     user.public = updateBody.public;
   }
+
+  if (image) {
+    const file = `uploads/${image}`;
+    const fileStream = fs.createReadStream(file);
+    const key = path.basename(file);
+    let location = image;
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
+      location = await putPublicS3(`profile/${id}/${key}`, fileStream);
+    }
+    fs.unlinkSync(file);
+    user.image = location;
+  }
+
   await user.save();
+  const result = user.toJSON();
+  delete result.password;
+  return result;
 };
 
 const deleteUser = async (id) => {
@@ -365,7 +402,7 @@ const findBlockedUsers = async (userId, page = 0, size = 10, search = '') => {
 const isBlocked = async (userId, blockedUserId) => {
   const user = await User.findByPk(userId);
   if (user) {
-    const count = await user.countUserblocks({
+    const count = await user.countUserBlocks({
       where: {
         userId,
         blockedUserId,
@@ -405,6 +442,78 @@ const resetPassword = async (token, password) => {
   return user;
 };
 
+const getImages = async (userId) => {
+  const images = await UserImage.findAll({
+    where: {
+      userId,
+    },
+  });
+  return images;
+};
+
+const postImage = async (userId, image) => {
+  const file = `uploads/${image}`;
+  const fileStream = fs.createReadStream(file);
+  const key = path.basename(file);
+  let location = image;
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
+    location = await putPublicS3(`profile/${userId}/${key}`, fileStream);
+  }
+  fs.unlinkSync(file);
+
+  const userImage = await UserImage.create({
+    userId,
+    image: location,
+  });
+
+  return userImage;
+};
+
+const updateImage = async (id, userId, image) => {
+  const file = `uploads/${image}`;
+  const fileStream = fs.createReadStream(file);
+  const key = path.basename(file);
+  let location = image;
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
+    location = await putPublicS3(`profile/${userId}/${key}`, fileStream);
+  }
+  fs.unlinkSync(file);
+
+  const userImage = await UserImage.findOne({ where: { id } });
+  userImage.image = location;
+  await userImage.save();
+
+  return userImage;
+};
+
+const removeImage = async (id) => {
+  await UserImage.destroy({
+    where: {
+      id,
+    },
+  });
+  return true;
+};
+
+const findImageById = async (id) => {
+  const userImage = await UserImage.findByPk(id);
+  return userImage;
+};
+
+const blockAnonymous = async (userId) => {
+  const user = await User.findOne({ where: { id: userId } });
+  user.blockAnonymous = true;
+  await user.save();
+  return user;
+};
+
+const unBlockAnonymous = async (userId) => {
+  const user = await User.findOne({ where: { id: userId } });
+  user.blockAnonymous = false;
+  await user.save();
+  return user;
+};
+
 module.exports = {
   save,
   findByEmail,
@@ -422,4 +531,11 @@ module.exports = {
   findBlockedUsers,
   sendResetPassword,
   resetPassword,
+  postImage,
+  getImages,
+  removeImage,
+  updateImage,
+  findImageById,
+  blockAnonymous,
+  unBlockAnonymous,
 };

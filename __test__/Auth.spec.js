@@ -1,9 +1,10 @@
 const request = require('supertest');
 const app = require('../src/app');
-const User = require('../src/user/User');
-const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
-const Token = require('../src/auth/Token');
+const db = require('../db/models');
+const sequelize = db.sequelize;
+const User = db.user;
+const Token = db.token;
 
 beforeAll(async () => {
   await sequelize.sync();
@@ -124,7 +125,7 @@ describe('Token Expiration', () => {
   };
   it('returns 403 when token is older than 1 week', async () => {
     const savedUser = await addUser();
-    const token = 'test-token';
+    const token = 'test-token111';
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 - 1); // 1 week + 1 milisecond
     await Token.create({
       token: token,

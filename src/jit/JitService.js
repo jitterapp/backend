@@ -1,11 +1,12 @@
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const User = require('../user/User');
-const Jit = require('./Jit');
-const JitReply = require('./JitReply');
-const JitLike = require('./JitLike');
-const JitFavorite = require('./JitFavorite');
-const JitPrivate = require('./JitPrivate');
+const db = require('../../db/models');
+const User = db.user;
+const Jit = db.jit;
+const JitReply = db.jitReply;
+const JitLike = db.jitLike;
+const JitFavorite = db.jitFavorite;
+const JitPrivate = db.jitPrivate;
 
 const proceedJitsWithCount = async (jitsWithCount, authenticatedUser) => {
   const jits = [];
@@ -49,12 +50,11 @@ const proceedJitsWithCount = async (jitsWithCount, authenticatedUser) => {
 
 const postJit = async (userId, content, friendIds = [], ispublic = true, anonymous = false) => {
   const jit = await Jit.create({
+    userId,
     content,
     ispublic,
     anonymous,
   });
-  const user = await User.findByPk(userId);
-  user.addJit(jit);
 
   if (anonymous && friendIds) {
     friendIds.map((friendId) => {
@@ -65,7 +65,16 @@ const postJit = async (userId, content, friendIds = [], ispublic = true, anonymo
   return jit;
 };
 
-const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous = 0, userId = 0, search = null) => {
+const findJits = async (
+  authenticatedUser,
+  page,
+  size,
+  ispublic = 0,
+  anonymous = 0,
+  userId = 0,
+  search = null,
+  creatorId = 0
+) => {
   const where = {};
   if (ispublic) {
     where.ispublic = ispublic;
@@ -95,6 +104,15 @@ const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous =
         },
       ],
     };
+  }
+  if (creatorId) {
+    if (userWhere) {
+      userWhere.id = creatorId;
+    } else {
+      userWhere = {
+        id: creatorId,
+      };
+    }
   }
 
   const includeUser = {
@@ -134,6 +152,7 @@ const findJits = async (authenticatedUser, page, size, ispublic = 0, anonymous =
     include,
     limit: size,
     offset: size * page,
+    order: [['createdAt', 'DESC']],
   });
 
   const result = await proceedJitsWithCount(jitsWithCount, authenticatedUser);

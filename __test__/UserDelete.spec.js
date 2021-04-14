@@ -1,9 +1,10 @@
 const request = require('supertest');
 const app = require('../src/app');
-const User = require('../src/user/User');
-const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
-const Token = require('../src/auth/Token');
+const db = require('../db/models');
+const sequelize = db.sequelize;
+const User = db.user;
+const Token = db.token;
 
 beforeAll(async () => {
   await sequelize.sync();

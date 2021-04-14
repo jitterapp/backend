@@ -1,5 +1,4 @@
-const config = require('config');
-const apiBase = config.get('api_base');
+const apiBase = process.env.API_BASE;
 const transporter = require('../config/emailTransporter');
 const nodemailer = require('nodemailer');
 
@@ -13,7 +12,7 @@ const sendAccountActivation = async (email, token) => {
       <b>Please click link below to activate your account</b>
     </div>
     <div>
-      <a href="${apiBase}/api/1.0/users/token/${token}">Activate</a>
+      <a href="${apiBase}/accountActivate.html?token=${token}">Activate</a>
     </div>
     `,
   });

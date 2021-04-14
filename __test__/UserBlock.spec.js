@@ -1,7 +1,8 @@
 const request = require('supertest');
 const app = require('../src/app');
-const User = require('../src/user/User');
-const sequelize = require('../src/config/database');
+const db = require('../db/models');
+const sequelize = db.sequelize;
+const User = db.user;
 const bcrypt = require('bcrypt');
 
 beforeAll(async () => {
@@ -52,8 +53,26 @@ const block = async (userId, options = {}) => {
   return agent.send();
 };
 
+const blockAnonymous = async (options = {}) => {
+  let agent = request(app).post(`/api/1.0/userblocks/anonymous`);
+
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.send();
+};
+
 const unblock = async (userId, options = {}) => {
   let agent = request(app).delete(`/api/1.0/userblocks/${userId}`);
+
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.send();
+};
+
+const unBlockAnonymous = async (options = {}) => {
+  let agent = request(app).delete(`/api/1.0/userblocks/anonymous`);
 
   if (options.token) {
     agent.set('Authorization', `Bearer ${options.token}`);
@@ -140,5 +159,35 @@ describe('Listing Blocked Users', () => {
     const listResponse = await listBlockedUsers({ token });
     expect(listResponse.status).toBe(200);
     expect(listResponse.body.count).toBe(1);
+  });
+});
+
+describe('Block anonymous', () => {
+  it('returns forbidden when request is sent unauthorized', async () => {
+    const response = await blockAnonymous();
+    expect(response.status).toBe(403);
+  });
+  it('success to block anonymous', async () => {
+    const user = await addUser();
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const response = await blockAnonymous({ token });
+    expect(response.status).toBe(200);
+    expect(response.body.id).toBe(user.id);
+    expect(response.body.blockAnonymous).toBe(true);
+  });
+});
+
+describe('UnBlock anonymous', () => {
+  it('returns forbidden when request is sent unauthorized', async () => {
+    const response = await unBlockAnonymous();
+    expect(response.status).toBe(403);
+  });
+  it('success to block anonymous', async () => {
+    const user = await addUser();
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const response = await unBlockAnonymous({ token });
+    expect(response.status).toBe(200);
+    expect(response.body.id).toBe(user.id);
+    expect(response.body.blockAnonymous).toBe(false);
   });
 });

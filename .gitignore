@@ -5,6 +5,7 @@
 *.log
 node_modules/*
 .env
+.env.production
 
 # Test
 *test.html
@@ -31,3 +32,5 @@ temp_resources
 config/development.json
 
 uploads
+
+test_db

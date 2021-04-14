@@ -40,6 +40,17 @@ router.post(
           throw new Error('can not jit to yrself');
         }
         for (let i = 0; i < friendIds.length; i++) {
+          const user = await UserService.getUser(friendIds[i]);
+          if (user.blockAnonymous) {
+            throw new Error('Anonymous Jit is blocked');
+          }
+          const isBlocked = await UserService.isBlocked(friendIds[i], userId);
+          if (isBlocked) {
+            throw new Error('You are blocked to post anonymoust Jit');
+          }
+        }
+
+        for (let i = 0; i < friendIds.length; i++) {
           const friendId = friendIds[i];
           const user = await UserService.getUser(friendId);
           if (!user) {
@@ -68,6 +79,78 @@ router.get('/api/1.0/jits', pagination, tokenAuthentication, async (req, res, ne
     next(err);
   }
 });
+
+router.get(
+  '/api/1.0/jits/all/:userId',
+  check('userId').isInt().withMessage('userId should be integer').bail().toInt(),
+  pagination,
+  tokenAuthentication,
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      const user = await UserService.getUser(userId);
+      if (!user) {
+        throw new Error('can not find user');
+      }
+      const authenticatedUser = req.authenticatedUser;
+      const { page, size } = req.pagination;
+      const { search } = req.query;
+      const jits = await JitService.findJits(authenticatedUser, page, size, false, false, 0, search, userId);
+      res.send(jits);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
+  '/api/1.0/jits/public/:userId',
+  check('userId').isInt().withMessage('userId should be integer').bail().toInt(),
+  pagination,
+  tokenAuthentication,
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      const user = await UserService.getUser(userId);
+      if (!user) {
+        throw new Error('can not find user');
+      }
+      const authenticatedUser = req.authenticatedUser;
+      const { page, size } = req.pagination;
+      const { search } = req.query;
+      const jits = await JitService.findJits(authenticatedUser, page, size, true, false, 0, search, userId);
+      res.send(jits);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
+  '/api/1.0/jits/private/:userId',
+  check('userId').isInt().withMessage('userId should be integer').bail().toInt(),
+  pagination,
+  tokenAuthentication,
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      const user = await UserService.getUser(userId);
+      if (!user) {
+        throw new Error('can not find user');
+      }
+      const authenticatedUser = req.authenticatedUser;
+      const { page, size } = req.pagination;
+      const { search } = req.query;
+      const jits = await JitService.findJits(authenticatedUser, page, size, false, true, 0, search, userId);
+      res.send(jits);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 router.get('/api/1.0/jits/liked', pagination, tokenAuthentication, async (req, res, next) => {
   try {

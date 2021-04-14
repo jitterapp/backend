@@ -1,12 +1,11 @@
+/* eslint-disable no-unused-vars */
 const AWS = require('aws-sdk');
 
 //AWS S3 for Images
-const ID = 'AKIAYWNBS2CVBBQCUMV2';
-const SECRET = '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';
-const BUCKET_NAME = 'jitterpublicbucket';
+const { AWS_ACCESS_KEY_SECRET, AWS_ACCESS_KEY_ID, BUCKET_NAME } = process.env;
 const s3Handle = new AWS.S3({
-  accessKeyId: ID,
-  secretAccessKey: SECRET,
+  accessKeyId: AWS_ACCESS_KEY_ID,
+  secretAccessKey: AWS_ACCESS_KEY_SECRET,
 });
 const params = {
   Bucket: BUCKET_NAME,
@@ -47,7 +46,8 @@ const listBucket = (bucket = BUCKET_NAME) => {
       console.log('Error', err);
       createBucket();
     } else {
-      console.log('Success', data);
+      // console.log('Success', data);
+      console.log('Success to list bucket');
     }
   });
 };

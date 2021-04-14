@@ -1,8 +1,9 @@
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const User = require('../user/User');
-const Friend = require('./Friend');
-const FriendRequest = require('./FriendRequest');
+const db = require('../../db/models');
+const Friend = db.friend;
+const FriendRequest = db.friendRequest;
+const User = db.user;
 
 const friendRequest = async (userId, friendId) => {
   const user = await User.findByPk(userId);
@@ -44,7 +45,7 @@ const getFriendRequestsSent = async (userId, page = 0, size = 10) => {
     include: {
       model: User,
       as: 'requestee',
-      attributes: ['id', 'fullname', 'username', 'dob', 'email'],
+      attributes: ['id', 'fullname', 'username', 'dob', 'email', 'image', 'gender', 'phonenumber'],
     },
     offset: page * size,
     limit: size,
@@ -60,7 +61,7 @@ const getFriendRequestsReceived = async (userId, page = 0, size = 10) => {
     include: {
       model: User,
       as: 'requester',
-      attributes: ['id', 'fullname', 'username', 'dob', 'email'],
+      attributes: ['id', 'fullname', 'username', 'dob', 'email', 'image', 'gender', 'phonenumber'],
     },
     page: page * size,
     limit: size,
@@ -76,7 +77,7 @@ const getFriends = async (userId, page = 0, size = 10, search = '') => {
     include: {
       model: User,
       as: 'friends',
-      attributes: ['id', 'fullname', 'username', 'dob', 'email'],
+      attributes: ['id', 'fullname', 'username', 'dob', 'email', 'image', 'gender', 'phonenumber'],
       where: {
         [Op.or]: [
           {

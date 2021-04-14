@@ -2,8 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const Story = require('./Story');
-const User = require('../user/User');
+const db = require('../../db/models');
+const User = db.user;
+const Story = db.story;
 const { putPublicS3 } = require('../shared/aws');
 
 const findStoryById = async (id) => {
@@ -86,6 +87,7 @@ const findStories = async (page, size, search = null) => {
     include,
     limit: size,
     offset: size * page,
+    order: [['createdAt', 'DESC']],
   });
 
   return storiesWithCount;

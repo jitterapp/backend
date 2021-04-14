@@ -10,6 +10,8 @@ const ForbiddenException = require('../error/ForbiddenException');
 const tokenAuthentication = require('../middleware/tokenAuthentication');
 const tokenAuthOrNot = require('../middleware/tokenAuthOrNot');
 
+const { upload } = require('../shared/upload');
+
 router.post(
   '/api/1.0/users',
   check('username')
@@ -89,6 +91,87 @@ router.get('/api/1.0/users/token/:token', async (req, res, next) => {
     next(err);
   }
 });
+
+router.get('/api/1.0/users/images', tokenAuthentication, async (req, res, next) => {
+  try {
+    const authenticatedUser = req.authenticatedUser;
+    const userId = authenticatedUser.id;
+    const userImage = await UserService.getImages(userId);
+    res.send(userImage);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/api/1.0/users/images', tokenAuthentication, upload.single('image'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      throw new Error('image is required');
+    }
+    const authenticatedUser = req.authenticatedUser;
+    const userId = authenticatedUser.id;
+    const userImage = await UserService.postImage(userId, req.file.filename);
+    res.send(userImage);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put(
+  '/api/1.0/users/images/:id',
+  check('id').isInt().withMessage('id should be integer').bail().toInt(),
+  validateRequest,
+  tokenAuthentication,
+  upload.single('image'),
+  async (req, res, next) => {
+    try {
+      const authenticatedUser = req.authenticatedUser;
+      const userId = authenticatedUser.id;
+      const id = req.params.id;
+      const image = await UserService.findImageById(id);
+      if (!image) {
+        throw new Error('can not find image');
+      }
+      if (image.userId !== userId) {
+        throw new Error('can not edit image');
+      }
+      if (!req.file) {
+        throw new Error('image is required');
+      }
+
+      const userImage = await UserService.updateImage(id, userId, req.file.filename);
+      res.send(userImage);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.delete(
+  '/api/1.0/users/images/:id',
+  check('id').isInt().withMessage('id should be integer').bail().toInt(),
+  validateRequest,
+  tokenAuthentication,
+  async (req, res, next) => {
+    try {
+      const authenticatedUser = req.authenticatedUser;
+      const userId = authenticatedUser.id;
+      const id = req.params.id;
+      const image = await UserService.findImageById(id);
+      if (!image) {
+        throw new Error('can not find image');
+      }
+      if (image.userId !== userId) {
+        throw new Error('can not delete image');
+      }
+
+      await UserService.removeImage(id);
+      return res.status(200).send({ message: 'removed image' });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 router.get('/api/1.0/users', pagination, tokenAuthOrNot, async (req, res) => {
   const authenticatedUser = req.authenticatedUser;
@@ -194,6 +277,7 @@ router.put(
 
 router.put(
   '/api/1.0/users/:id',
+  upload.single('image'),
   check('id').isInt().withMessage('id should be integer').bail().toInt(),
   check('username')
     .if(body('username').exists())
@@ -222,10 +306,6 @@ router.put(
         if (!pn.isValid() || !pn.isPossible()) {
           throw new Error('phonenumber is invalid');
         }
-        const user = await UserService.findByPhonenumber(pn.getNumber('significant'));
-        if (user) {
-          throw new Error('phonenumber is already in use');
-        }
       } catch (err) {
         throw new Error('phonenumber is invalid');
       }
@@ -238,19 +318,33 @@ router.put(
   tokenAuthentication,
   validateRequest,
   async (req, res, next) => {
-    const authenticatedUser = req.authenticatedUser;
+    try {
+      const userId = req.params.id;
+      const authenticatedUser = req.authenticatedUser;
 
-    if (authenticatedUser.id !== req.params.id) {
-      return next(new ForbiddenException('Not authorized to edit user'));
-    }
-    if (req.body.phonenumber) {
-      const user = await UserService.findByPhonenumber(req.body.phonenumber);
-      if (user.id !== authenticatedUser.id) {
-        throw new Error('phonenumber is already in use');
+      if (authenticatedUser.id !== userId) {
+        return next(new ForbiddenException('Not authorized to edit user'));
       }
+      if (req.body.phonenumber) {
+        const user = await UserService.findByPhonenumber(req.body.phonenumber);
+        if (user) {
+          if (user.id !== authenticatedUser.id) {
+            throw new Error('phonenumber is already in use');
+          }
+        }
+      }
+
+      const reqBody = req.body;
+      if (req.file) {
+        const user = await UserService.updateUser(userId, reqBody, req.file.filename);
+        res.send(user);
+      } else {
+        const user = await UserService.updateUser(userId, reqBody);
+        res.send(user);
+      }
+    } catch (err) {
+      next(err);
     }
-    await UserService.updateUser(req.params.id, req.body);
-    return res.send({ message: 'updated' });
   }
 );
 
@@ -276,6 +370,30 @@ router.get('/api/1.0/userblocks', pagination, tokenAuthentication, async (req, r
     const authenticatedUser = req.authenticatedUser;
     const search = req.query.search;
     const result = await UserService.findBlockedUsers(authenticatedUser.id, page, size, search);
+    return res.send(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/api/1.0/userblocks/anonymous', tokenAuthentication, async (req, res, next) => {
+  try {
+    const authenticatedUser = req.authenticatedUser;
+    const userId = authenticatedUser.id;
+    await UserService.blockAnonymous(userId);
+    const result = await UserService.getUser(userId);
+    return res.send(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/api/1.0/userblocks/anonymous', tokenAuthentication, async (req, res, next) => {
+  try {
+    const authenticatedUser = req.authenticatedUser;
+    const userId = authenticatedUser.id;
+    await UserService.unBlockAnonymous(userId);
+    const result = await UserService.getUser(userId);
     return res.send(result);
   } catch (err) {
     next(err);

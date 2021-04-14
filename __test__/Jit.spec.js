@@ -1,8 +1,11 @@
 const request = require('supertest');
 const app = require('../src/app');
-const User = require('../src/user/User');
-const sequelize = require('../src/config/database');
 const bcryt = require('bcrypt');
+const db = require('../db/models');
+const sequelize = db.sequelize;
+const User = db.user;
+const UserBlock = db.userBlock;
+const Jit = db.jit;
 
 beforeAll(async () => {
   await sequelize.sync();
@@ -10,6 +13,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await User.destroy({ truncate: { cascade: true } }); //clean user table before each test
+  await Jit.destroy({ truncate: { cascade: true } });
 });
 
 const activeUser = {
@@ -18,6 +22,7 @@ const activeUser = {
   email: 'user1@mail.com',
   password: 'P4ssword',
   inactive: false,
+  blockAnonymous: false,
 };
 const friendUser = {
   username: 'frienduser',
@@ -25,6 +30,7 @@ const friendUser = {
   email: 'friend@mail.com',
   password: 'P4ssword',
   inactive: false,
+  blockAnonymous: false,
 };
 
 const addUser = async (user = { ...activeUser }) => {
@@ -151,6 +157,36 @@ const getAllFavoritedJits = async (options = {}) => {
   return agent.send();
 };
 
+const getAllJitsByUserId = async (options = {}, userId) => {
+  let url = `/api/1.0/jits/all/${userId}`;
+  const agent = request(app).get(url);
+
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.send();
+};
+
+const getAllPublicJitsByUserId = async (options = {}, userId) => {
+  let url = `/api/1.0/jits/public/${userId}`;
+  const agent = request(app).get(url);
+
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.send();
+};
+
+const getAllPrivateJitsByUserId = async (options = {}, userId) => {
+  let url = `/api/1.0/jits/private/${userId}`;
+  const agent = request(app).get(url);
+
+  if (options.token) {
+    agent.set('Authorization', `Bearer ${options.token}`);
+  }
+  return agent.send();
+};
+
 describe('Post Jit', () => {
   it('returns forbidden when request is sent unauthorized', async () => {
     const response = await postJit();
@@ -189,13 +225,33 @@ describe('Post Jit', () => {
   });
   it('success to post private Jit', async () => {
     await addUser();
-    const otherUser = await addUser(friendUser);
+    const otherUser = await addUser({ ...friendUser });
     const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
     const response = await postJit('test', [otherUser.id], { token });
     expect(response.status).toBe(200);
     expect(response.body.content).toBe('test');
     expect(response.body.anonymous).toBe(true);
     expect(response.body.ispublic).toBe(false);
+  });
+  it('fails to post private Jit to anonymous blocked user', async () => {
+    await addUser();
+    const otherUser = await addUser({ ...friendUser, blockAnonymous: true });
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const response = await postJit('test', [otherUser.id], { token });
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Anonymous Jit is blocked');
+  });
+  it('fails to post private Jit to blocked user', async () => {
+    const user = await addUser();
+    const otherUser = await addUser({ ...friendUser });
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    await UserBlock.create({
+      userId: otherUser.id,
+      blockedUserId: user.id,
+    });
+    const response = await postJit('test', [otherUser.id], { token });
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('You are blocked to post anonymoust Jit');
   });
 });
 
@@ -437,5 +493,62 @@ describe('Jit Favorite', () => {
     expect(jitsResponse.status).toBe(200);
     expect(jitsResponse.body.count).toBe(1);
     expect(jitsResponse.body.jits.length).toBe(1);
+  });
+});
+
+describe('Get All jits by userId', () => {
+  it('returns forbidden when request is sent unauthorized', async () => {
+    const response = await getAllJitsByUserId();
+    expect(response.status).toBe(403);
+  });
+  it('success to get all jits by userId', async () => {
+    const user = await addUser();
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const response = await postJit('test', null, { token });
+    expect(response.status).toBe(200);
+    const otherUser = await addUser({ ...friendUser });
+    const prviateJitResponse = await postJit('test', [otherUser.id], { token });
+    expect(prviateJitResponse.status).toBe(200);
+    const getAllJitsResponse = await getAllJitsByUserId({ token }, user.id);
+    expect(getAllJitsResponse.status).toBe(200);
+    expect(getAllJitsResponse.body.count).toBe(2);
+  });
+});
+
+describe('Get All public jits by userId', () => {
+  it('returns forbidden when request is sent unauthorized', async () => {
+    const response = await getAllPublicJitsByUserId();
+    expect(response.status).toBe(403);
+  });
+  it('success to get all public jits by userId', async () => {
+    const user = await addUser();
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const response = await postJit('test', null, { token });
+    expect(response.status).toBe(200);
+    const otherUser = await addUser({ ...friendUser });
+    const prviateJitResponse = await postJit('test', [otherUser.id], { token });
+    expect(prviateJitResponse.status).toBe(200);
+    const getAllJitsResponse = await getAllPublicJitsByUserId({ token }, user.id);
+    expect(getAllJitsResponse.status).toBe(200);
+    expect(getAllJitsResponse.body.count).toBe(1);
+  });
+});
+
+describe('Get All private jits by userId', () => {
+  it('returns forbidden when request is sent unauthorized', async () => {
+    const response = await getAllPrivateJitsByUserId();
+    expect(response.status).toBe(403);
+  });
+  it('success to get all public jits by userId', async () => {
+    const user = await addUser();
+    const token = await auth({ auth: { email: activeUser.email, password: activeUser.password } });
+    const response = await postJit('test', null, { token });
+    expect(response.status).toBe(200);
+    const otherUser = await addUser({ ...friendUser });
+    const prviateJitResponse = await postJit('test', [otherUser.id], { token });
+    expect(prviateJitResponse.status).toBe(200);
+    const getAllJitsResponse = await getAllPrivateJitsByUserId({ token }, user.id);
+    expect(getAllJitsResponse.status).toBe(200);
+    expect(getAllJitsResponse.body.count).toBe(1);
   });
 });
